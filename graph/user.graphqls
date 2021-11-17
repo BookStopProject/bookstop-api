@@ -1,0 +1,16 @@
+type User {
+  id: ID!
+  name: String!
+  description: String
+  profileImageUrl: String
+  createdAt: Time!
+}
+
+extend type Query {
+  me: User
+  user(id: ID!): User
+}
+
+extend type Mutation {
+  meUpdate(name: String, description: String): User
+}

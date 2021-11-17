@@ -1,0 +1,21 @@
+type UserBook {
+  id: ID!
+  bookId: ID!
+  book: Book! @goField(forceResolver: true)
+  userId: ID!
+  startedAt: String
+  endedAt: String
+  originalUserBookId: ID
+  originalUserBook: UserBook
+}
+
+extend type Query {
+  userBook(id: ID!): UserBook
+  userBooks(userId: ID, mine: Boolean): [UserBook!]!
+}
+
+extend type Mutation {
+  userBookAdd(bookId: ID!, startedAt: String, endedAt: String): UserBook!
+  userBookEdit(id: ID!, startedAt: String, endedAt: String): UserBook!
+  userBookDelete(id: ID!): Boolean!
+}

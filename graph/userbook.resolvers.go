@@ -1,0 +1,133 @@
+package graph
+
+// This file will be automatically regenerated based on the schema, any resolver implementations
+// will be copied through when generating and any unknown code will be moved to the end.
+
+import (
+	"bookstop/auth"
+	"bookstop/book"
+	"bookstop/graph/generated"
+	"bookstop/graph/model"
+	"bookstop/userbook"
+	"context"
+	"errors"
+	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+)
+
+func (r *mutationResolver) UserBookAdd(ctx context.Context, bookID string, startedAt *string, endedAt *string) (*model.UserBook, error) {
+	usr, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil {
+		return nil, auth.ErrUnauthorized
+	}
+	ub, err := userbook.Create(ctx, int(usr.ID.Int), bookID, startedAt, endedAt)
+	if err != nil {
+		return nil, err
+	}
+	return userbook.ToGraph(ub), nil
+}
+
+func (r *mutationResolver) UserBookEdit(ctx context.Context, id string, startedAt *string, endedAt *string) (*model.UserBook, error) {
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	usr, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil {
+		return nil, auth.ErrUnauthorized
+	}
+	owned, err := userbook.IsOwner(ctx, int(usr.ID.Int), intId)
+	if err != nil {
+		return nil, err
+	}
+	if !owned {
+		return nil, auth.ErrForbidden
+	}
+	ub, err := userbook.UpdateById(ctx, intId, startedAt, endedAt)
+	if err != nil {
+		return nil, err
+	}
+	return userbook.ToGraph(ub), nil
+}
+
+func (r *mutationResolver) UserBookDelete(ctx context.Context, id string) (bool, error) {
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return false, err
+	}
+	usr, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if usr == nil {
+		return false, auth.ErrUnauthorized
+	}
+	owned, err := userbook.IsOwner(ctx, int(usr.ID.Int), intId)
+	if err != nil {
+		return false, err
+	}
+	if !owned {
+		return false, auth.ErrForbidden
+	}
+	return userbook.DeleteById(ctx, intId)
+}
+
+func (r *queryResolver) UserBook(ctx context.Context, id string) (*model.UserBook, error) {
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+	userBook, err := userbook.FindById(ctx, intId)
+	if err != nil {
+		return nil, err
+	}
+	return userbook.ToGraph(userBook), nil
+}
+
+func (r *queryResolver) UserBooks(ctx context.Context, userID *string, mine *bool) ([]*model.UserBook, error) {
+	var results []*model.UserBook
+	var userBooks []*userbook.UserBook
+	var errs []error
+	if userID != nil {
+		intUserId, err := strconv.Atoi(*userID)
+		if err != nil {
+			return nil, err
+		}
+		userBooks, errs = userbook.FindManyByUserId(ctx, intUserId)
+	} else if *mine {
+		usr, err := auth.ForContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if usr == nil {
+			return nil, auth.ErrUnauthorized
+		}
+		userBooks, errs = userbook.FindManyByUserId(ctx, int(usr.ID.Int))
+	} else {
+		return nil, errors.New("must provide either userID or mine = true")
+	}
+	for i, ub := range userBooks {
+		if errs[i] != nil {
+			graphql.AddError(ctx, gqlerror.Errorf("userbook "+strconv.Itoa(i)+": "+errs[i].Error()))
+		}
+		results = append(results, userbook.ToGraph(ub))
+	}
+	return results, nil
+}
+
+func (r *userBookResolver) Book(ctx context.Context, obj *model.UserBook) (*model.Book, error) {
+	return book.FindById(ctx, obj.BookID)
+}
+
+// UserBook returns generated.UserBookResolver implementation.
+func (r *Resolver) UserBook() generated.UserBookResolver { return &userBookResolver{r} }
+
+type userBookResolver struct{ *Resolver }
