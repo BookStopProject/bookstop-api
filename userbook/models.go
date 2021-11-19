@@ -5,7 +5,6 @@ import (
 	"bookstop/db"
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/jackc/pgtype"
@@ -22,47 +21,6 @@ type UserBook struct {
 }
 
 const allSelects = "id, user_id, book_id, started_at, ended_at, id_original"
-
-func FindById(ctx context.Context, id int) (*UserBook, error) {
-	ub := &UserBook{}
-
-	err := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE id = $1", id).Scan(
-		&ub.ID,
-		&ub.UserId,
-		&ub.BookId,
-		&ub.StartedAt,
-		&ub.EndedAt,
-		&ub.IDOriginal,
-	)
-
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return ub, nil
-}
-
-func addRowsToResult(rows *pgx.Rows, userBooks *[]*UserBook, errs *[]error) {
-	for (*rows).Next() {
-		ub := &UserBook{}
-		err := (*rows).Scan(
-			&ub.ID,
-			&ub.UserId,
-			&ub.BookId,
-			&ub.StartedAt,
-			&ub.EndedAt,
-			&ub.IDOriginal,
-		)
-		if err != nil {
-			ub = nil
-		}
-		*errs = append(*errs, err)
-		*userBooks = append(*userBooks, ub)
-	}
-}
 
 func verifyDates(startedAt *string, endedAt *string) error {
 	var startedAtTime *time.Time
@@ -93,9 +51,57 @@ func verifyDates(startedAt *string, endedAt *string) error {
 	return nil
 }
 
-func Create(ctx context.Context, userId int, bookId string, startedAt *string, endedAt *string) (*UserBook, error) {
+func scanRow(row *pgx.Row) (*UserBook, error) {
 	ub := &UserBook{}
+	err := (*row).Scan(
+		&ub.ID,
+		&ub.UserId,
+		&ub.BookId,
+		&ub.StartedAt,
+		&ub.EndedAt,
+		&ub.IDOriginal,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ub, nil
+}
 
+func scanRows(rows *pgx.Rows) (userBooks []*UserBook, errs []error) {
+	for (*rows).Next() {
+		ub := &UserBook{}
+		err := (*rows).Scan(
+			&ub.ID,
+			&ub.UserId,
+			&ub.BookId,
+			&ub.StartedAt,
+			&ub.EndedAt,
+			&ub.IDOriginal,
+		)
+		if err != nil {
+			errs = append(errs, err)
+			userBooks = append(userBooks, nil)
+		} else {
+			errs = append(errs, nil)
+			userBooks = append(userBooks, ub)
+		}
+	}
+	return
+}
+
+func FindById(ctx context.Context, id int) (*UserBook, error) {
+	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE id = $1", id)
+	ub, err := scanRow(&row)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ub, nil
+}
+
+func Create(ctx context.Context, userId int, bookId string, startedAt *string, endedAt *string) (*UserBook, error) {
 	// Verify book available
 	b, err := book.FindById(ctx, bookId)
 	if err != nil {
@@ -110,16 +116,12 @@ func Create(ctx context.Context, userId int, bookId string, startedAt *string, e
 		return nil, err
 	}
 
-	err = db.Conn.QueryRow(ctx, `INSERT INTO public.user_book(
+	row := db.Conn.QueryRow(ctx, `INSERT INTO public.user_book(
 		user_id, book_id, started_at, ended_at)
-		VALUES ($1, $2, $3, $4) RETURNING `+allSelects, userId, bookId, startedAt, endedAt).Scan(
-		&ub.ID,
-		&ub.UserId,
-		&ub.BookId,
-		&ub.StartedAt,
-		&ub.EndedAt,
-		&ub.IDOriginal,
-	)
+		VALUES ($1, $2, $3, $4) RETURNING `+allSelects, userId, bookId, startedAt, endedAt)
+
+	ub, err := scanRow(&row)
+
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +137,7 @@ func IsOwner(ctx context.Context, userId int, id int) (bool, error) {
 	return ubUserId == userId, nil
 }
 
-func FindManyByIds(ctx context.Context, ids []int) (userBooks []*UserBook, errs []error) {
+func FindManyByIds(ctx context.Context, ids []int) ([]*UserBook, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -143,26 +145,24 @@ func FindManyByIds(ctx context.Context, ids []int) (userBooks []*UserBook, errs 
 	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE id IN ("+db.ParamRefsStr(len(ids))+")", args...)
 
 	if err != nil {
-		log.Panicln(err)
+		panic(err)
 	}
 
 	defer rows.Close()
-	addRowsToResult(&rows, &userBooks, &errs)
 
-	return
+	return scanRows(&rows)
 }
 
-func FindManyByUserId(ctx context.Context, userId int) (userBooks []*UserBook, errs []error) {
+func FindManyByUserId(ctx context.Context, userId int) ([]*UserBook, []error) {
 	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE user_id = $1", userId)
 
 	if err != nil {
-		log.Panicln(err)
+		panic(err)
 	}
 
 	defer rows.Close()
-	addRowsToResult(&rows, &userBooks, &errs)
 
-	return
+	return scanRows(&rows)
 }
 
 func UpdateById(ctx context.Context, id int, startedAt *string, endedAt *string) (*UserBook, error) {
@@ -171,22 +171,10 @@ func UpdateById(ctx context.Context, id int, startedAt *string, endedAt *string)
 	}
 
 	verifyDates(startedAt, endedAt)
-	ub := UserBook{}
 
-	err := db.Conn.QueryRow(ctx, "UPDATE public.user_book SET started_at = $2, ended_at = $3 WHERE id = $1 RETURNING "+allSelects, id, startedAt, endedAt).Scan(
-		&ub.ID,
-		&ub.UserId,
-		&ub.BookId,
-		&ub.StartedAt,
-		&ub.EndedAt,
-		&ub.IDOriginal,
-	)
+	row := db.Conn.QueryRow(ctx, "UPDATE public.user_book SET started_at = $2, ended_at = $3 WHERE id = $1 RETURNING "+allSelects, id, startedAt, endedAt)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &ub, nil
+	return scanRow(&row)
 }
 
 func DeleteById(ctx context.Context, id int) (bool, error) {

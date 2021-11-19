@@ -18,10 +18,35 @@ type Book struct {
 }
 
 type Browse struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description *string    `json:"description"`
+	ImageURL    *string    `json:"imageUrl"`
+	StartedAt   *time.Time `json:"startedAt"`
+	EndedAt     *time.Time `json:"endedAt"`
+}
+
+type Inventory struct {
+	ID         string    `json:"id"`
+	UserBookID string    `json:"userBookId"`
+	UserBook   *UserBook `json:"userBook"`
+	LocationID string    `json:"locationId"`
+	Location   *Location `json:"location"`
+	Removed    bool      `json:"removed"`
+}
+
+type InventoryClaim struct {
+	ID          string     `json:"id"`
+	InventoryID string     `json:"inventoryId"`
+	Inventory   *Inventory `json:"inventory"`
+	ClaimedAt   time.Time  `json:"claimedAt"`
+}
+
+type Location struct {
 	ID          string  `json:"id"`
 	Name        string  `json:"name"`
-	Description *string `json:"description"`
-	ImageURL    *string `json:"imageUrl"`
+	ParentName  *string `json:"parentName"`
+	AddressLine string  `json:"addressLine"`
 }
 
 type User struct {
@@ -30,15 +55,16 @@ type User struct {
 	Description     *string   `json:"description"`
 	ProfileImageURL *string   `json:"profileImageUrl"`
 	CreatedAt       time.Time `json:"createdAt"`
+	Credit          *int      `json:"credit"`
 }
 
 type UserBook struct {
-	ID                 string    `json:"id"`
-	BookID             string    `json:"bookId"`
-	Book               *Book     `json:"book"`
-	UserID             string    `json:"userId"`
-	StartedAt          *string   `json:"startedAt"`
-	EndedAt            *string   `json:"endedAt"`
-	OriginalUserBookID *string   `json:"originalUserBookId"`
-	OriginalUserBook   *UserBook `json:"originalUserBook"`
+	ID                 string  `json:"id"`
+	BookID             string  `json:"bookId"`
+	Book               *Book   `json:"book"`
+	UserID             string  `json:"userId"`
+	User               *User   `json:"user"`
+	StartedAt          *string `json:"startedAt"`
+	EndedAt            *string `json:"endedAt"`
+	OriginalUserBookID *string `json:"originalUserBookId"`
 }

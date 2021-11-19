@@ -4,7 +4,6 @@ import (
 	"bookstop/db"
 	"context"
 	"errors"
-	"log"
 	"strconv"
 	"strings"
 
@@ -20,6 +19,7 @@ type User struct {
 	Name            pgtype.Varchar
 	Description     pgtype.Varchar
 	ProfileImageUrl pgtype.Varchar
+	Credit          pgtype.Int4
 }
 
 const (
@@ -27,22 +27,53 @@ const (
 	maxLengthDescription = 160
 )
 
-const allSelects = "id, name, oauth_id, email, description, profile_image_url, created_at"
+const allSelects = "id, name, oauth_id, email, description, profile_image_url, created_at, credit"
 
-func Create(ctx context.Context, name string, oauthId string, email *string, picture *string) (*User, error) {
+func scanRow(row *pgx.Row) (*User, error) {
 	user := &User{}
-	err := db.Conn.QueryRow(ctx, "INSERT INTO public.user(name, oauth_id, email, profile_image_url) VALUES ($1, $2, $3, $4) RETURNING "+allSelects, name, oauthId, email, picture).Scan(&user.ID,
+	err := (*row).Scan(
+		&user.ID,
 		&user.Name,
 		&user.OauthId,
 		&user.Email,
 		&user.Description,
 		&user.ProfileImageUrl,
 		&user.CreatedAt,
+		&user.Credit,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
+}
+
+func scanRows(rows *pgx.Rows) (users []*User, errs []error) {
+	for (*rows).Next() {
+		user := &User{}
+		err := (*rows).Scan(
+			&user.ID,
+			&user.Name,
+			&user.OauthId,
+			&user.Email,
+			&user.Description,
+			&user.ProfileImageUrl,
+			&user.CreatedAt,
+			&user.Credit,
+		)
+		if err != nil {
+			errs = append(errs, err)
+			users = append(users, nil)
+		} else {
+			errs = append(errs, nil)
+			users = append(users, user)
+		}
+	}
+	return
+}
+
+func Create(ctx context.Context, name string, oauthId string, email *string, picture *string) (*User, error) {
+	row := db.Conn.QueryRow(ctx, "INSERT INTO public.user(name, oauth_id, email, profile_image_url) VALUES ($1, $2, $3, $4) RETURNING "+allSelects, name, oauthId, email, picture)
+	return scanRow(&row)
 }
 
 func FindIdByOauthId(ctx context.Context, oauthId string) (*int, error) {
@@ -63,17 +94,9 @@ func FindIdByOauthId(ctx context.Context, oauthId string) (*int, error) {
 }
 
 func FindById(ctx context.Context, id int) (*User, error) {
-	user := &User{}
+	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user WHERE id = $1", id)
 
-	err := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user WHERE id = $1", id).Scan(
-		&user.ID,
-		&user.Name,
-		&user.OauthId,
-		&user.Email,
-		&user.Description,
-		&user.ProfileImageUrl,
-		&user.CreatedAt,
-	)
+	user, err := scanRow(&row)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -85,7 +108,7 @@ func FindById(ctx context.Context, id int) (*User, error) {
 	return user, nil
 }
 
-func FindManyByIds(ctx context.Context, ids []int) (users []*User, errs []error) {
+func FindManyByIds(ctx context.Context, ids []int) ([]*User, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -93,28 +116,12 @@ func FindManyByIds(ctx context.Context, ids []int) (users []*User, errs []error)
 	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user WHERE id IN ("+db.ParamRefsStr(len(ids))+")", args...)
 
 	if err != nil {
-		log.Panicln(err)
+		panic(err)
 	}
 
 	defer rows.Close()
 
-	for rows.Next() {
-		user := &User{}
-		err = rows.Scan(&user.ID,
-			&user.Name,
-			&user.OauthId,
-			&user.Email,
-			&user.Description,
-			&user.ProfileImageUrl,
-			&user.CreatedAt)
-		if err != nil {
-			user = nil
-		}
-		errs = append(errs, err)
-		users = append(users, user)
-	}
-
-	return
+	return scanRows(&rows)
 }
 
 func UpdateById(ctx context.Context, id int, name *string, description *string) (*User, error) {
@@ -152,21 +159,7 @@ func UpdateById(ctx context.Context, id int, name *string, description *string) 
 		values = append(values, *description)
 	}
 
-	user := User{}
+	row := db.Conn.QueryRow(ctx, "UPDATE public.user SET "+strings.Join(fields, ",")+" WHERE id = $1 RETURNING "+allSelects, values...)
 
-	err := db.Conn.QueryRow(ctx, "UPDATE public.user SET "+strings.Join(fields, ",")+" WHERE id = $1 RETURNING "+allSelects, values...).Scan(
-		&user.ID,
-		&user.Name,
-		&user.OauthId,
-		&user.Email,
-		&user.Description,
-		&user.ProfileImageUrl,
-		&user.CreatedAt,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+	return scanRow(&row)
 }

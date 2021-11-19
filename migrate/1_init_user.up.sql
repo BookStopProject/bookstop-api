@@ -7,5 +7,6 @@ CREATE TABLE public."user"
     name character varying(100) NOT NULL,
     description character varying(160),
     "profile_image_url" character varying,
+    credit integer NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );

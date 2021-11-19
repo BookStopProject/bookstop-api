@@ -12,6 +12,12 @@ https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 go generate ./...
 ```
 
+### Generate dataloaden
+
+```bash
+go run github.com/vektah/dataloaden UserLoader string *github.com/dataloaden/example.User
+```
+
 ### Start server
 
 ```bash

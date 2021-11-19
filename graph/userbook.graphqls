@@ -3,10 +3,10 @@ type UserBook {
   bookId: ID!
   book: Book! @goField(forceResolver: true)
   userId: ID!
+  user: User! @goField(forceResolver: true)
   startedAt: String
   endedAt: String
   originalUserBookId: ID
-  originalUserBook: UserBook
 }
 
 extend type Query {

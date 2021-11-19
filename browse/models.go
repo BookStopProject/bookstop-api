@@ -11,17 +11,32 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const allSelects = "id, name, description, image_url"
+const allSelects = "id, name, description, image_url, started_at, ended_at"
 
-func FindById(ctx context.Context, id int) (*model.Browse, error) {
-	browse := &model.Browse{}
+type Browse = model.Browse
 
-	err := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.browse WHERE id = $1", id).Scan(
-		browse.ID,
-		browse.Name,
-		browse.Description,
-		browse.ImageURL,
+func scanRow(row *pgx.Row) (*Browse, error) {
+	br := &Browse{}
+	var browseId int
+	err := (*row).Scan(
+		&browseId,
+		&br.Name,
+		&br.Description,
+		&br.ImageURL,
+		&br.StartedAt,
+		&br.EndedAt,
 	)
+	br.ID = strconv.Itoa(browseId)
+	if err != nil {
+		return nil, err
+	}
+	return br, nil
+}
+
+func FindById(ctx context.Context, id int) (*Browse, error) {
+	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.browse WHERE id = $1", id)
+
+	br, err := scanRow(&row)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -30,15 +45,17 @@ func FindById(ctx context.Context, id int) (*model.Browse, error) {
 		return nil, err
 	}
 
-	return browse, nil
+	return br, nil
 }
 
-func FindAll(ctx context.Context, when *time.Time) (results []*model.Browse, err error) {
+func FindAll(ctx context.Context, when *time.Time) (results []*Browse, err error) {
+	var rows pgx.Rows
 	query := "SELECT " + allSelects + " FROM public.browse"
 	if when != nil {
-		query += " WHERE $1 between started_at and ended_at"
+		rows, err = db.Conn.Query(ctx, query+" WHERE $1 between started_at and ended_at", when)
+	} else {
+		rows, err = db.Conn.Query(ctx, query)
 	}
-	rows, err := db.Conn.Query(ctx, query, when)
 
 	if err != nil {
 		return
@@ -47,19 +64,21 @@ func FindAll(ctx context.Context, when *time.Time) (results []*model.Browse, err
 	defer rows.Close()
 
 	for rows.Next() {
-		browse := &model.Browse{}
+		br := &Browse{}
 		var browseId int
 		err = rows.Scan(
 			&browseId,
-			&browse.Name,
-			&browse.Description,
-			&browse.ImageURL,
+			&br.Name,
+			&br.Description,
+			&br.ImageURL,
+			&br.StartedAt,
+			&br.EndedAt,
 		)
-		browse.ID = strconv.Itoa(browseId)
+		br.ID = strconv.Itoa(browseId)
 		if err != nil {
 			return
 		}
-		results = append(results, browse)
+		results = append(results, br)
 	}
 
 	return

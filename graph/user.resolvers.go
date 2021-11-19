@@ -32,7 +32,10 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return user.ToGraph(usr), nil
+	u := user.ToGraph(usr)
+	creditInt := int(usr.Credit.Int)
+	u.Credit = &creditInt
+	return u, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {

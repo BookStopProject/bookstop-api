@@ -4,6 +4,7 @@ type User {
   description: String
   profileImageUrl: String
   createdAt: Time!
+  credit: Int
 }
 
 extend type Query {

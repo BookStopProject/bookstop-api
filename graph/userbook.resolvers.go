@@ -5,9 +5,10 @@ package graph
 
 import (
 	"bookstop/auth"
-	"bookstop/book"
 	"bookstop/graph/generated"
 	"bookstop/graph/model"
+	"bookstop/loader"
+	"bookstop/user"
 	"bookstop/userbook"
 	"context"
 	"errors"
@@ -85,7 +86,7 @@ func (r *queryResolver) UserBook(ctx context.Context, id string) (*model.UserBoo
 	if err != nil {
 		return nil, err
 	}
-	userBook, err := userbook.FindById(ctx, intId)
+	userBook, err := loader.For(ctx).UserBookById.Load(intId)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +125,16 @@ func (r *queryResolver) UserBooks(ctx context.Context, userID *string, mine *boo
 }
 
 func (r *userBookResolver) Book(ctx context.Context, obj *model.UserBook) (*model.Book, error) {
-	return book.FindById(ctx, obj.BookID)
+	return loader.For(ctx).BookById.Load(obj.BookID)
+}
+
+func (r *userBookResolver) User(ctx context.Context, obj *model.UserBook) (*model.User, error) {
+	intId, _ := strconv.Atoi(obj.UserID)
+	usr, err := loader.For(ctx).UserById.Load(intId)
+	if err != nil {
+		return nil, err
+	}
+	return user.ToGraph(usr), nil
 }
 
 // UserBook returns generated.UserBookResolver implementation.
