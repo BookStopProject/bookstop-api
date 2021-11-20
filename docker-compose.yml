@@ -33,7 +33,8 @@ services:
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
   migrate:
     image: migrate/migrate
-    volumes: ./migrate:/migrations
+    volumes:
+      - ./migrate:/migrations
     command: ["-path", "/migrations", "-database",  "postgresql://postgres@postgres/postgres", "up"]
     depends_on:
       - postgres
