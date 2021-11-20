@@ -1,0 +1,45 @@
+{{template "base" .}} {{define "title"}}Location{{end}} {{define "main"}}
+<h2>Create Browse</h2>
+<form method="post">
+  <label for="new-name">Name</label>
+  <input required id="new-name" name="name" minlength="1" maxlength="200" />
+  <label for="new-parent-name">Parent Name</label>
+  <input
+    id="new-parent-name"
+    name="parent_name"
+    minlength="1"
+    maxlength="200"
+  />
+  <label for="new-address-line">Address Line</label>
+  <input
+    required
+    id="new-address-line"
+    name="address_line"
+    minlength="1"
+    maxlength="200"
+  />
+  <input type="submit" value="Submit" />
+  <input type="reset" value="Reset" />
+</form>
+<h2>All Locations</h2>
+<table style="table-layout: auto">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Parent Name</th>
+      <th>Address Line</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Locations }}
+    <tr>
+      <td>{{ .ID }}</td>
+      <td>{{ .Name }}</td>
+      <td>{{ .ParentName }}</td>
+      <td>{{ .AddressLine }}</td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{end}}

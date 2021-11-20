@@ -7,9 +7,11 @@ import (
 	"bookstop/graph/model"
 	"bookstop/inventory"
 	"bookstop/location"
+	"bookstop/user"
 	"bookstop/userbook"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -73,7 +75,7 @@ func apiBrowseCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		return
 	}
 
-	apiBrowse(w, r, ps)
+	http.Redirect(w, r, "/admin/browse", http.StatusSeeOther)
 }
 
 // /admin/browse/:id
@@ -360,6 +362,79 @@ func apiCheckInCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 	}
 }
 
+// /admin/location
+var tmplLocation = template.Must(template.ParseFiles("admin/location.html", "admin/base.html"))
+
+type DataLocation struct {
+	Locations []*model.Location
+}
+
+func apiLocation(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	locations, err := location.FindAllLocations(r.Context())
+
+	if err != nil {
+		writeErr(w, err, http.StatusInternalServerError)
+	}
+
+	if err := tmplLocation.Execute(w, DataLocation{Locations: locations}); err != nil {
+		writeErr(w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func apiLocationCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	if err := r.ParseForm(); err != nil {
+		writeErr(w, err, http.StatusBadRequest)
+		return
+	}
+
+	_, err := location.Create(r.Context(),
+		r.PostForm.Get("name"),
+		r.PostForm.Get("parent_name"),
+		r.PostForm.Get("address_line"))
+
+	if err != nil {
+		http.Redirect(w, r, "/admin/location?error="+err.Error(), http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/location", http.StatusSeeOther)
+}
+
+// admin/user
+type DataUser struct {
+	Users []*user.User
+}
+
+var tmplUser = template.Must(template.ParseFiles("admin/user.html", "admin/base.html"))
+
+func apiUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	users, _ := user.FindAll(r.Context())
+	if err := tmplUser.Execute(w, DataUser{Users: users}); err != nil {
+		writeErr(w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func apiUserMoneyHack(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	intId, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		writeErr(w, err, http.StatusBadRequest)
+	}
+	intMoney, err := strconv.Atoi(r.URL.Query().Get("value"))
+	if err != nil {
+		writeErr(w, err, http.StatusBadRequest)
+	}
+	var intNewMoney int
+	err = db.Conn.QueryRow(r.Context(), "UPDATE public.user SET credit=$2 WHERE id=$1 RETURNING credit", intId, intMoney).Scan(&intNewMoney)
+	if err != nil {
+		writeErr(w, err, http.StatusInternalServerError)
+	}
+	fmt.Fprintf(w, "money = "+strconv.Itoa(intNewMoney))
+}
+
+// router
+
 func basicAuth(next httprouter.Handle) httprouter.Handle {
 	adminAuth := strings.Split(os.Getenv("ADMIN_AUTH"), ":")
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -376,7 +451,6 @@ func basicAuth(next httprouter.Handle) httprouter.Handle {
 }
 
 func Router(router *httprouter.Router) {
-
 	(*router).GET("/admin", basicAuth(apiHome))
 	(*router).GET("/admin/browse", basicAuth(apiBrowse))
 	(*router).POST("/admin/browse", basicAuth(apiBrowseCreate))
@@ -391,4 +465,8 @@ func Router(router *httprouter.Router) {
 	(*router).POST("/admin/check-out/action", basicAuth(apiCheckOutActionCommit))
 	(*router).GET("/admin/check-in", basicAuth(apiCheckIn))
 	(*router).POST("/admin/check-in", basicAuth(apiCheckInCreate))
+	(*router).GET("/admin/location", basicAuth(apiLocation))
+	(*router).POST("/admin/location", basicAuth(apiLocationCreate))
+	(*router).GET("/admin/user", basicAuth(apiUser))
+	(*router).GET("/admin/user/:id/$$$", basicAuth(apiUserMoneyHack))
 }

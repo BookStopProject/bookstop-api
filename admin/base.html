@@ -25,13 +25,16 @@
       <p>© 2021 SSTeam212. All rights reserved.</p>
     </footer>
     <script>
-      const err = new URL(window.location).searchParams.get("error");
+      const url = new URL(window.location);
+      const err = url.searchParams.get("error");
       if (err) {
         Swal.fire({
           icon: "error",
           title: "Something went wrong",
           text: err,
         });
+        url.searchParams.delete("error");
+        window.history.pushState({}, document.title, url);
       }
     </script>
   </body>

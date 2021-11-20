@@ -108,6 +108,16 @@ func FindById(ctx context.Context, id int) (*User, error) {
 	return user, nil
 }
 
+func FindAll(ctx context.Context) ([]*User, []error) {
+	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	return scanRows(&rows)
+}
+
 func FindManyByIds(ctx context.Context, ids []int) ([]*User, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {

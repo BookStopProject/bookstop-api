@@ -73,3 +73,14 @@ func FindManyByIds(ctx context.Context, ids []int) ([]*Location, []error) {
 	defer rows.Close()
 	return scanRows(&rows)
 }
+
+func Create(ctx context.Context, name string, parentName string, addressLine string) (*Location, error) {
+	loc := &Location{}
+	err := db.Conn.QueryRow(ctx, `INSERT INTO public.location(name, parent_name, address_line) VALUES ($1, $2, $3) RETURNING `+allSelects, name, parentName, addressLine).Scan(
+		&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return loc, nil
+}
