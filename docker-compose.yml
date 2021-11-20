@@ -1,24 +1,58 @@
 services:
+  traefik:
+    image: traefik:v2.5
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=hoangvvo.dev@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/app/letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  app:
+    image: registry.digitalocean.com/bookstop/bookstop:latest
+    container_name: "app"
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure
+    env_file: .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`api.bookstop.app`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+  migrate:
+    image: migrate/migrate
+    volumes: ./migrate:/migrations
+    command: ["-path", "/migrations", "-database",  "postgresql://postgres@postgres/postgres", "up"]
+    depends_on:
+      - postgres
   postgres:
     image: postgres:14.1
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   redis:
     image: redis:6.2.6-alpine
     restart: always
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
-  app:
-    image: registry.digitalocean.com/bookstop/bookstop:latest
-    depends_on:
-      - postgres
-      - redis
-    restart: on-failure
-    env_file: .env
-    ports:
-      - "8080:80"
 volumes:
   postgres_data:
     driver: local

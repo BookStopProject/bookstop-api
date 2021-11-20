@@ -12,6 +12,7 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -136,7 +137,7 @@ func apiBrowseEachEdit(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		r.PostForm.Get("started_at"),
 		r.PostForm.Get("ended_at"))
 
-	redirectUrl := "/admin/browse" + strId
+	redirectUrl := "/admin/browse/" + strId
 
 	if err != nil {
 		redirectUrl += "?error=" + err.Error()
@@ -359,19 +360,35 @@ func apiCheckInCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 	}
 }
 
+func basicAuth(next httprouter.Handle) httprouter.Handle {
+	adminAuth := strings.Split(os.Getenv("ADMIN_AUTH"), ":")
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		username, password, ok := r.BasicAuth()
+		if ok {
+			if username == adminAuth[0] && password == adminAuth[1] {
+				next(w, r, ps)
+				return
+			}
+		}
+		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	}
+}
+
 func Router(router *httprouter.Router) {
-	(*router).GET("/admin", apiHome)
-	(*router).GET("/admin/browse", apiBrowse)
-	(*router).POST("/admin/browse", apiBrowseCreate)
-	(*router).GET("/admin/browse/:id", apiBrowseEach)
-	(*router).POST("/admin/browse/:id", apiBrowseEachEdit)
-	(*router).DELETE("/admin/browse/:id", apiBrowseEachDelete)
-	(*router).POST("/admin/browse/:id/books", apiBrowseEachAddBooks)
-	(*router).DELETE("/admin/browse/:id/books", apiBrowseEachDeleteBook)
-	(*router).GET("/admin/inventory", apiInventory)
-	(*router).GET("/admin/check-out", apiCheckOut)
-	(*router).GET("/admin/check-out/action", apiCheckOutAction)
-	(*router).POST("/admin/check-out/action", apiCheckOutActionCommit)
-	(*router).GET("/admin/check-in", apiCheckIn)
-	(*router).POST("/admin/check-in", apiCheckInCreate)
+
+	(*router).GET("/admin", basicAuth(apiHome))
+	(*router).GET("/admin/browse", basicAuth(apiBrowse))
+	(*router).POST("/admin/browse", basicAuth(apiBrowseCreate))
+	(*router).GET("/admin/browse/:id", basicAuth(apiBrowseEach))
+	(*router).POST("/admin/browse/:id", basicAuth(apiBrowseEachEdit))
+	(*router).DELETE("/admin/browse/:id", basicAuth(apiBrowseEachDelete))
+	(*router).POST("/admin/browse/:id/books", basicAuth(apiBrowseEachAddBooks))
+	(*router).DELETE("/admin/browse/:id/books", basicAuth(apiBrowseEachDeleteBook))
+	(*router).GET("/admin/inventory", basicAuth(apiInventory))
+	(*router).GET("/admin/check-out", basicAuth(apiCheckOut))
+	(*router).GET("/admin/check-out/action", basicAuth(apiCheckOutAction))
+	(*router).POST("/admin/check-out/action", basicAuth(apiCheckOutActionCommit))
+	(*router).GET("/admin/check-in", basicAuth(apiCheckIn))
+	(*router).POST("/admin/check-in", basicAuth(apiCheckInCreate))
 }
