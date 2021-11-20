@@ -1,0 +1,4 @@
+.env
+migrate
+bookstop
+dump.rdb
