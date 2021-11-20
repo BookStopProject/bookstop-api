@@ -114,6 +114,10 @@ func FindById(ctx context.Context, id string) (*Book, error) {
 }
 
 func FindManyByIds(ctx context.Context, ids []string) ([]*Book, []error) {
+	if len(ids) <= 0 {
+		return []*Book{}, []error{}
+	}
+
 	result, err := getCache(ctx, ids)
 	if err != nil {
 		panic(err)

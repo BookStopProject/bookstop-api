@@ -26,6 +26,15 @@ type Browse struct {
 	EndedAt     *time.Time `json:"endedAt"`
 }
 
+type Exchange struct {
+	ID            string    `json:"id"`
+	UserBookIDOld string    `json:"userBookIdOld"`
+	UserBookOld   *UserBook `json:"userBookOld"`
+	UserBookIDNew string    `json:"userBookIdNew"`
+	UserBookNew   *UserBook `json:"userBookNew"`
+	ExchangedAt   time.Time `json:"exchangedAt"`
+}
+
 type Inventory struct {
 	ID         string    `json:"id"`
 	UserBookID string    `json:"userBookId"`

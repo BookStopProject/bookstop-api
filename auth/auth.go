@@ -4,7 +4,9 @@ import (
 	"bookstop/db"
 	"bookstop/user"
 	"context"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
@@ -88,3 +90,13 @@ func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error)
 func signOut(ctx context.Context, authCode string) (int64, error) {
 	return db.RDB.Del(ctx, redisAuthKeyPrefix+authCode).Result()
 }
+
+func getHmacSecret() []byte {
+	hmacSecret := os.Getenv("HMAC_SECRET")
+	if hmacSecret == "" {
+		log.Fatalln("No HMAC_SECRET env")
+	}
+	return []byte(hmacSecret)
+}
+
+var HmacSecret = getHmacSecret()

@@ -154,7 +154,7 @@ func FindManyByIds(ctx context.Context, ids []int) ([]*UserBook, []error) {
 }
 
 func FindManyByUserId(ctx context.Context, userId int) ([]*UserBook, []error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE user_id = $1", userId)
+	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE user_id = $1 ORDER BY id DESC", userId)
 
 	if err != nil {
 		panic(err)

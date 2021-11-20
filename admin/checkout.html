@@ -1,0 +1,83 @@
+{{template "base" .}} {{define "title"}}Check Out{{end}} {{define "main"}}
+<h2>Scan QR Code</h2>
+<div id="reader"></div>
+<h2>Result</h2>
+<pre>
+  <code id="result"></code>
+</pre>
+<button id="submit">Check out</button>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+  let lastToken;
+
+  const resultNode = document.querySelector("#result");
+
+  const html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    false
+  );
+
+  async function onScanSuccess(decodedText, decodedResult) {
+    const result = await fetch("/admin/check-out/action?token=" + decodedText);
+    if (!result.ok) {
+      Swal.fire({
+        icon: "error",
+        title: await result.text(),
+        toast: true,
+        position: "top",
+        showConfirmButton: false,
+        timer: 7000,
+      });
+    } else {
+      lastToken = decodedText;
+      resultNode.innerText = JSON.stringify(await result.json(), null, 2);
+      resultNode.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }
+
+  html5QrcodeScanner.render(onScanSuccess);
+
+  const submitButton = document.querySelector("#submit");
+  submitButton.onclick = async function doCheckout() {
+    if (!lastToken) {
+      Swal.fire({
+        icon: "error",
+        text: "No token has been scanned",
+      });
+      return;
+    }
+    const { isConfirmed } = await Swal.fire({
+      title: "Check out this book?",
+      text: "Please review the information carefully before continuing",
+      showCancelButton: true,
+      confirmButtonText: "Check out",
+    });
+
+    if (!isConfirmed) return;
+
+    this.disabled = true;
+    const result = await fetch("/admin/check-out/action?token=" + lastToken, {
+      method: "POST",
+    });
+    if (!result.ok) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: await result.text(),
+      });
+    } else {
+      lastToken = undefined;
+      resultNode.innerText = "";
+      Swal.fire({
+        icon: "success",
+        text: "Checked out sucecssfully",
+      });
+    }
+    this.disabled = false;
+  };
+</script>
+{{end}}

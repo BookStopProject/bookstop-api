@@ -50,11 +50,12 @@ func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
 		loc := &Location{}
 		err = rows.Scan(
 			&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine)
-		results = append(results, ToGraph(loc))
 
 		if err != nil {
 			return nil, err
 		}
+
+		results = append(results, ToGraph(loc))
 	}
 
 	return results, nil

@@ -1,0 +1,124 @@
+{{template "base" .}} {{define "title"}}Browse: {{ .Browse.Name }}{{end}}
+{{define "main"}}
+<h2>Edit Browse</h2>
+<form action="" method="post">
+  <label for="name">Name</label>
+  <input
+    required
+    id="name"
+    name="name"
+    minlength="1"
+    maxlength="100"
+    value="{{ .Browse.Name }}"
+  />
+  <label for="description">Description</label>
+  <textarea
+    id="description"
+    name="description"
+    minlength="1"
+    maxlength="160"
+    rows="2"
+    value="{{ .Browse.Description }}"
+  ></textarea>
+  <label for="started-at">Started at</label>
+  <input required id="new-started-at" name="started_at" type="datetime-local"
+  value="{{ .Browse.StartedAt.Format "2006-01-02T15:04:05" }}" />
+  <label for="ended-at">Ended at</label>
+  <input required id="new-ended-at" name="ended_at" type="datetime-local"
+  value="{{ .Browse.EndedAt.Format "2006-01-02T15:04:05" }}" />
+  <input type="submit" value="Submit" />
+</form>
+<h2>Books</h2>
+<form
+  action="/admin/browse/{{ .Browse.ID }}/books"
+  method="post"
+  style="display: flex; align-items: center"
+>
+  <input
+    name="book_ids"
+    aria-label="Book IDs to add"
+    style="flex: 1 0 0"
+    required
+    id="add-book-ids"
+    placeholder="PGR2AwAAQBAJ,gnQJEAAAQBAJ,8586DAAAQBAJ"
+  />
+  <input type="submit" value="Add Books" />
+</form>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Author</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Books }}
+    <tr>
+      <td>{{ .ID }}</td>
+      <td>{{ .Title }}</td>
+      <td>{{ .Authors }}</td>
+      <td>
+        <a href="javascript:deleteBook('{{ .ID }}')">Delete</a>
+      </td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+<h2>Delete Browse</h2>
+<button onclick="deleteSelf()">Delete</button>
+<script>
+  async function deleteSelf() {
+    const { isConfirmed } = await Swal.fire({
+      title: "Are you sure?",
+      text: "Delete the browse: {{ .Browse.Name }}",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+    });
+    if (!isConfirmed) return;
+    await fetch(window.location.pathname, { method: "DELETE" });
+    window.location.replace("/admin/browse");
+  }
+
+  async function deleteBook(id) {
+    const result = await fetch(
+      "/admin/browse/{{ .Browse.ID }}/books?book_ids=" + id,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!result.ok) {
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: await result.text(),
+      });
+      return;
+    }
+    window.location.replace("/admin/browse/{{ .Browse.ID }}?book_removed=1");
+  }
+
+  if (new URL(window.location).searchParams.get("book_removed")) {
+    Swal.fire({
+      icon: "success",
+      title: "Book has been removed",
+      toast: true,
+      position: "top",
+      showConfirmButton: false,
+      timer: 7000,
+    });
+  }
+
+  if (new URL(window.location).searchParams.get("book_added")) {
+    Swal.fire({
+      icon: "success",
+      title: "Book has been added",
+      toast: true,
+      position: "top",
+      showConfirmButton: false,
+      timer: 7000,
+    });
+  }
+</script>
+{{end}}

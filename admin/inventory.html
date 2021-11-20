@@ -1,0 +1,30 @@
+{{template "base" .}} {{define "title"}}Inventory{{end}} {{define "main"}}
+<h2>All Books</h2>
+<table style="table-layout: auto">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Location ID</th>
+      <th>Book ID</th>
+      <th>User Book ID</th>
+      <th>Checked In</th>
+      <th>Checked Out</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Inventories }}
+    <tr {{if .RemovedAt}}style="text-decoration: line-through;" {{ end }}>
+      <td>{{ .ID }}</td>
+      <td>{{ .LocationId }}</td>
+      <td>{{ .BookID }}</td>
+      <td>{{ .UserBookId }}</td>
+      <td>{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}</td>
+      <td>
+        {{if .RemovedAt}}{{ .RemovedAt.Format "2006-01-02T15:04:05Z07:00"
+        }}{{end}}
+      </td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{end}}

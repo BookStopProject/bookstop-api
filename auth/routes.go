@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/julienschmidt/httprouter"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -30,11 +31,6 @@ type GoogleProfileResponse struct {
 	Picture *string `json:"picture"`
 }
 
-func RedirectHandler(w http.ResponseWriter, r *http.Request) {
-	url := GetConf().AuthCodeURL(r.URL.Query().Get("redirect_url"))
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-}
-
 func callbackWithError(w http.ResponseWriter, r *http.Request, redirectUrl string, err error) {
 	if err == nil {
 		err = errors.New("unknown")
@@ -45,7 +41,13 @@ func callbackWithError(w http.ResponseWriter, r *http.Request, redirectUrl strin
 	appUrl := os.Getenv("APP_URL")
 	http.Redirect(w, r, appUrl+redirectUrl+"?auth_error="+err.Error(), http.StatusTemporaryRedirect)
 }
-func CallbackHandler(w http.ResponseWriter, r *http.Request) {
+
+func apiAuth(w http.ResponseWriter, r *http.Request) {
+	url := GetConf().AuthCodeURL(r.URL.Query().Get("redirect_url"))
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+func apiCallback(w http.ResponseWriter, r *http.Request) {
 	authCode := r.URL.Query().Get("code")
 	errCode := r.URL.Query().Get("error")
 	redirectUrl := r.URL.Query().Get("state")
@@ -87,4 +89,9 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	appUrl := os.Getenv("APP_URL")
 	http.Redirect(w, r, appUrl+redirectUrl+"?auth_token="+authToken, http.StatusTemporaryRedirect)
+}
+
+func Router(router *httprouter.Router) {
+	(*router).HandlerFunc(http.MethodGet, "/auth", apiAuth)
+	(*router).HandlerFunc(http.MethodGet, "/auth/callback", apiCallback)
 }

@@ -36,6 +36,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Exchange() ExchangeResolver
 	Inventory() InventoryResolver
 	InventoryClaim() InventoryClaimResolver
 	Mutation() MutationResolver
@@ -65,6 +66,15 @@ type ComplexityRoot struct {
 		ImageURL    func(childComplexity int) int
 		Name        func(childComplexity int) int
 		StartedAt   func(childComplexity int) int
+	}
+
+	Exchange struct {
+		ExchangedAt   func(childComplexity int) int
+		ID            func(childComplexity int) int
+		UserBookIDNew func(childComplexity int) int
+		UserBookIDOld func(childComplexity int) int
+		UserBookNew   func(childComplexity int) int
+		UserBookOld   func(childComplexity int) int
 	}
 
 	Inventory struct {
@@ -105,6 +115,7 @@ type ComplexityRoot struct {
 		Browse              func(childComplexity int, id string) int
 		BrowseBooks         func(childComplexity int, id string) int
 		Browses             func(childComplexity int) int
+		Exchanges           func(childComplexity int, userBookID string) int
 		Foo                 func(childComplexity int) int
 		Inventories         func(childComplexity int, bookID *string, locationID *string) int
 		InventoryClaimToken func(childComplexity int, id string) int
@@ -138,6 +149,11 @@ type ComplexityRoot struct {
 	}
 }
 
+type ExchangeResolver interface {
+	UserBookOld(ctx context.Context, obj *model.Exchange) (*model.UserBook, error)
+
+	UserBookNew(ctx context.Context, obj *model.Exchange) (*model.UserBook, error)
+}
 type InventoryResolver interface {
 	UserBook(ctx context.Context, obj *model.Inventory) (*model.UserBook, error)
 
@@ -162,6 +178,7 @@ type QueryResolver interface {
 	Browse(ctx context.Context, id string) (*model.Browse, error)
 	BrowseBooks(ctx context.Context, id string) ([]*model.Book, error)
 	Search(ctx context.Context, query string, limit int, skip *int) ([]*model.Book, error)
+	Exchanges(ctx context.Context, userBookID string) ([]*model.Exchange, error)
 	Inventories(ctx context.Context, bookID *string, locationID *string) ([]*model.Inventory, error)
 	InventoryClaimsMine(ctx context.Context) ([]*model.InventoryClaim, error)
 	InventoryClaimToken(ctx context.Context, id string) (string, error)
@@ -289,6 +306,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Browse.StartedAt(childComplexity), true
+
+	case "Exchange.exchangedAt":
+		if e.complexity.Exchange.ExchangedAt == nil {
+			break
+		}
+
+		return e.complexity.Exchange.ExchangedAt(childComplexity), true
+
+	case "Exchange.id":
+		if e.complexity.Exchange.ID == nil {
+			break
+		}
+
+		return e.complexity.Exchange.ID(childComplexity), true
+
+	case "Exchange.userBookIdNew":
+		if e.complexity.Exchange.UserBookIDNew == nil {
+			break
+		}
+
+		return e.complexity.Exchange.UserBookIDNew(childComplexity), true
+
+	case "Exchange.userBookIdOld":
+		if e.complexity.Exchange.UserBookIDOld == nil {
+			break
+		}
+
+		return e.complexity.Exchange.UserBookIDOld(childComplexity), true
+
+	case "Exchange.userBookNew":
+		if e.complexity.Exchange.UserBookNew == nil {
+			break
+		}
+
+		return e.complexity.Exchange.UserBookNew(childComplexity), true
+
+	case "Exchange.userBookOld":
+		if e.complexity.Exchange.UserBookOld == nil {
+			break
+		}
+
+		return e.complexity.Exchange.UserBookOld(childComplexity), true
 
 	case "Inventory.id":
 		if e.complexity.Inventory.ID == nil {
@@ -509,6 +568,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Browses(childComplexity), true
+
+	case "Query.exchanges":
+		if e.complexity.Query.Exchanges == nil {
+			break
+		}
+
+		args, err := ec.field_Query_exchanges_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Exchanges(childComplexity, args["userBookId"].(string)), true
 
 	case "Query.foo":
 		if e.complexity.Query.Foo == nil {
@@ -799,6 +870,19 @@ extend type Query {
   browse(id: ID!): Browse
   browseBooks(id: ID!): [Book!]!
   search(query: String!, limit: Int!, skip: Int): [Book!]!
+}
+`, BuiltIn: false},
+	{Name: "graph/exchange.graphqls", Input: `type Exchange {
+  id: ID!
+  userBookIdOld: ID!
+  userBookOld: UserBook! @goField(forceResolver: true)
+  userBookIdNew: ID!
+  userBookNew: UserBook! @goField(forceResolver: true)
+  exchangedAt: Time!
+}
+
+extend type Query {
+  exchanges(userBookId: ID!): [Exchange!]!
 }
 `, BuiltIn: false},
 	{Name: "graph/inventory.graphqls", Input: `type Inventory {
@@ -1097,6 +1181,21 @@ func (ec *executionContext) field_Query_browse_args(ctx context.Context, rawArgs
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_exchanges_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userBookId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userBookId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userBookId"] = arg0
 	return args, nil
 }
 
@@ -1731,6 +1830,216 @@ func (ec *executionContext) _Browse_endedAt(ctx context.Context, field graphql.C
 	res := resTmp.(*time.Time)
 	fc.Result = res
 	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_id(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_userBookIdOld(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserBookIDOld, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_userBookOld(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Exchange().UserBookOld(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserBook)
+	fc.Result = res
+	return ec.marshalNUserBook2ᚖbookstopᚋgraphᚋmodelᚐUserBook(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_userBookIdNew(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserBookIDNew, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_userBookNew(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Exchange().UserBookNew(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserBook)
+	fc.Result = res
+	return ec.marshalNUserBook2ᚖbookstopᚋgraphᚋmodelᚐUserBook(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Exchange_exchangedAt(ctx context.Context, field graphql.CollectedField, obj *model.Exchange) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Exchange",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExchangedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Inventory_id(ctx context.Context, field graphql.CollectedField, obj *model.Inventory) (ret graphql.Marshaler) {
@@ -2728,6 +3037,48 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	res := resTmp.([]*model.Book)
 	fc.Result = res
 	return ec.marshalNBook2ᚕᚖbookstopᚋgraphᚋmodelᚐBookᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_exchanges(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_exchanges_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Exchanges(rctx, args["userBookId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Exchange)
+	fc.Result = res
+	return ec.marshalNExchange2ᚕᚖbookstopᚋgraphᚋmodelᚐExchangeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_inventories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4802,6 +5153,76 @@ func (ec *executionContext) _Browse(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var exchangeImplementors = []string{"Exchange"}
+
+func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet, obj *model.Exchange) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exchangeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Exchange")
+		case "id":
+			out.Values[i] = ec._Exchange_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "userBookIdOld":
+			out.Values[i] = ec._Exchange_userBookIdOld(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "userBookOld":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Exchange_userBookOld(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "userBookIdNew":
+			out.Values[i] = ec._Exchange_userBookIdNew(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "userBookNew":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Exchange_userBookNew(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "exchangedAt":
+			out.Values[i] = ec._Exchange_exchangedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var inventoryImplementors = []string{"Inventory"}
 
 func (ec *executionContext) _Inventory(ctx context.Context, sel ast.SelectionSet, obj *model.Inventory) graphql.Marshaler {
@@ -5111,6 +5532,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_search(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "exchanges":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_exchanges(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5761,6 +6196,60 @@ func (ec *executionContext) marshalNBrowse2ᚖbookstopᚋgraphᚋmodelᚐBrowse(
 		return graphql.Null
 	}
 	return ec._Browse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNExchange2ᚕᚖbookstopᚋgraphᚋmodelᚐExchangeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Exchange) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNExchange2ᚖbookstopᚋgraphᚋmodelᚐExchange(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNExchange2ᚖbookstopᚋgraphᚋmodelᚐExchange(ctx context.Context, sel ast.SelectionSet, v *model.Exchange) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Exchange(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

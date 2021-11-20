@@ -1,0 +1,42 @@
+{{template "base" .}} {{define "title"}}Check In{{end}} {{define "main"}}
+<h2>Scan QR Code</h2>
+<div id="reader"></div>
+<h2>Check In form</h2>
+<form method="post">
+  <label for="user-book-id">User Book ID</label>
+  <input required id="user-book-id" name="user_book_id" />
+  <label for="location-id">Location</label>
+  <select required id="user-book-id" name="location_id">
+    {{ range .Locations }}
+    <option value="{{ .ID }}">{{ .Name }} - {{ .AddressLine }}</option>
+    {{ end }}
+  </select>
+  <input type="checkbox" name="check-confirm" id="check-confirm" required />
+  <label for="check-confirm"
+    >I have verified the book and will reward the user with 1 credit</label
+  >
+  <input type="submit" value="Submit" />
+</form>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+  const userBookIdInput = document.querySelector("#user-book-id");
+  const userBookLink = document.querySelector("#user-book-link");
+  const html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    false
+  );
+  function onScanSuccess(decodedText, decodedResult) {
+    userBookIdInput.value = decodedText;
+  }
+  html5QrcodeScanner.render(onScanSuccess);
+</script>
+{{if .CheckedUserBook}}
+<script>
+  Swal.fire({
+    icon: "success",
+    title: "Checked in sucecssfully",
+    text: "User book {{.CheckedUserBook.ID.Int}} is received. User {{.CheckedUserBook.UserId.Int}} has been rewarded with 1 credit.",
+  });
+</script>
+{{end}} {{end}}

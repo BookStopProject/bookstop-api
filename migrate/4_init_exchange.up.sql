@@ -15,7 +15,8 @@ CREATE TABLE public.inventory
         REFERENCES public.location (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-        NOT VALID
+        NOT VALID,
+    UNIQUE(user_book_id)
 );
 
 CREATE TABLE public.exchange

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bookstop/admin"
 	"bookstop/auth"
 	"bookstop/db"
 	"bookstop/graph"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 )
 
@@ -27,7 +29,9 @@ func main() {
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
+	router := httprouter.New()
+
+	router.Handler(http.MethodGet, "/playground", playground.Handler("GraphQL playground", "/graphql"))
 
 	cor := cors.New(cors.Options{
 		AllowOriginFunc: func(_ string) bool {
@@ -37,11 +41,14 @@ func main() {
 		AllowedHeaders: []string{"*"},
 	})
 
-	http.Handle("/graphql", cor.Handler(loader.Middleware(auth.Middleware(srv))))
+	apiGraphQL := cor.Handler(loader.Middleware(auth.Middleware(srv)))
+	router.Handler(http.MethodGet, "/graphql", apiGraphQL)
+	router.Handler(http.MethodPost, "/graphql", apiGraphQL)
+	router.Handler(http.MethodOptions, "/graphql", apiGraphQL)
 
-	http.HandleFunc("/auth", auth.RedirectHandler)
-	http.HandleFunc("/auth/callback", auth.CallbackHandler)
+	auth.Router(router)
+	admin.Router(router)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

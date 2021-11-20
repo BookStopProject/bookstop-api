@@ -1,0 +1,12 @@
+type Exchange {
+  id: ID!
+  userBookIdOld: ID!
+  userBookOld: UserBook! @goField(forceResolver: true)
+  userBookIdNew: ID!
+  userBookNew: UserBook! @goField(forceResolver: true)
+  exchangedAt: Time!
+}
+
+extend type Query {
+  exchanges(userBookId: ID!): [Exchange!]!
+}
