@@ -1,0 +1,18 @@
+type Thought {
+  id: ID!
+  text: String!
+  createdAt: Time!
+  userId: ID!
+  user: User! @goField(forceResolver: true)
+  bookId: ID
+  book: Book @goField(forceResolver: true)
+}
+
+extend type Query {
+  thoughts(userId: ID, limit: Int!, before: Int): [Thought!]!
+}
+
+extend type Mutation {
+  thoughtCreate(text: String!, bookId: ID): Thought!
+  thoughtDelete(id: ID!): Boolean!
+}

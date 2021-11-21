@@ -178,9 +178,10 @@ func UpdateById(ctx context.Context, id int, startedAt *string, endedAt *string)
 }
 
 func DeleteById(ctx context.Context, id int) (bool, error) {
-	_, err := db.Conn.Query(ctx, "DELETE FROM public.user_book WHERE id = $1", id)
+	rows, err := db.Conn.Query(ctx, "DELETE FROM public.user_book WHERE id = $1", id)
 	if err != nil {
 		return false, err
 	}
+	defer rows.Close()
 	return true, nil
 }

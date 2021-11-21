@@ -58,6 +58,16 @@ type Location struct {
 	AddressLine string  `json:"addressLine"`
 }
 
+type Thought struct {
+	ID        string    `json:"id"`
+	Text      string    `json:"text"`
+	CreatedAt time.Time `json:"createdAt"`
+	UserID    string    `json:"userId"`
+	User      *User     `json:"user"`
+	BookID    *string   `json:"bookId"`
+	Book      *Book     `json:"book"`
+}
+
 type User struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`

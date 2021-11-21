@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	InventoryClaim() InventoryClaimResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Thought() ThoughtResolver
 	UserBook() UserBookResolver
 }
 
@@ -104,6 +105,8 @@ type ComplexityRoot struct {
 		Foo              func(childComplexity int) int
 		InventoryClaimDo func(childComplexity int, id string) int
 		MeUpdate         func(childComplexity int, name *string, description *string) int
+		ThoughtCreate    func(childComplexity int, text string, bookID *string) int
+		ThoughtDelete    func(childComplexity int, id string) int
 		UserBookAdd      func(childComplexity int, bookID string, startedAt *string, endedAt *string) int
 		UserBookDelete   func(childComplexity int, id string) int
 		UserBookEdit     func(childComplexity int, id string, startedAt *string, endedAt *string) int
@@ -123,9 +126,20 @@ type ComplexityRoot struct {
 		Locations           func(childComplexity int) int
 		Me                  func(childComplexity int) int
 		Search              func(childComplexity int, query string, limit int, skip *int) int
+		Thoughts            func(childComplexity int, userID *string, limit int, before *int) int
 		User                func(childComplexity int, id string) int
 		UserBook            func(childComplexity int, id string) int
 		UserBooks           func(childComplexity int, userID *string, mine *bool) int
+	}
+
+	Thought struct {
+		Book      func(childComplexity int) int
+		BookID    func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Text      func(childComplexity int) int
+		User      func(childComplexity int) int
+		UserID    func(childComplexity int) int
 	}
 
 	User struct {
@@ -165,6 +179,8 @@ type InventoryClaimResolver interface {
 type MutationResolver interface {
 	Foo(ctx context.Context) (*int, error)
 	InventoryClaimDo(ctx context.Context, id string) (*model.InventoryClaim, error)
+	ThoughtCreate(ctx context.Context, text string, bookID *string) (*model.Thought, error)
+	ThoughtDelete(ctx context.Context, id string) (bool, error)
 	MeUpdate(ctx context.Context, name *string, description *string) (*model.User, error)
 	UserBookAdd(ctx context.Context, bookID string, startedAt *string, endedAt *string) (*model.UserBook, error)
 	UserBookEdit(ctx context.Context, id string, startedAt *string, endedAt *string) (*model.UserBook, error)
@@ -183,10 +199,16 @@ type QueryResolver interface {
 	InventoryClaimsMine(ctx context.Context) ([]*model.InventoryClaim, error)
 	InventoryClaimToken(ctx context.Context, id string) (string, error)
 	Locations(ctx context.Context) ([]*model.Location, error)
+	Thoughts(ctx context.Context, userID *string, limit int, before *int) ([]*model.Thought, error)
 	Me(ctx context.Context) (*model.User, error)
 	User(ctx context.Context, id string) (*model.User, error)
 	UserBook(ctx context.Context, id string) (*model.UserBook, error)
 	UserBooks(ctx context.Context, userID *string, mine *bool) ([]*model.UserBook, error)
+}
+type ThoughtResolver interface {
+	User(ctx context.Context, obj *model.Thought) (*model.User, error)
+
+	Book(ctx context.Context, obj *model.Thought) (*model.Book, error)
 }
 type UserBookResolver interface {
 	Book(ctx context.Context, obj *model.UserBook) (*model.Book, error)
@@ -478,6 +500,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MeUpdate(childComplexity, args["name"].(*string), args["description"].(*string)), true
 
+	case "Mutation.thoughtCreate":
+		if e.complexity.Mutation.ThoughtCreate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_thoughtCreate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ThoughtCreate(childComplexity, args["text"].(string), args["bookId"].(*string)), true
+
+	case "Mutation.thoughtDelete":
+		if e.complexity.Mutation.ThoughtDelete == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_thoughtDelete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ThoughtDelete(childComplexity, args["id"].(string)), true
+
 	case "Mutation.userBookAdd":
 		if e.complexity.Mutation.UserBookAdd == nil {
 			break
@@ -645,6 +691,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["limit"].(int), args["skip"].(*int)), true
 
+	case "Query.thoughts":
+		if e.complexity.Query.Thoughts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_thoughts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Thoughts(childComplexity, args["userId"].(*string), args["limit"].(int), args["before"].(*int)), true
+
 	case "Query.user":
 		if e.complexity.Query.User == nil {
 			break
@@ -680,6 +738,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.UserBooks(childComplexity, args["userId"].(*string), args["mine"].(*bool)), true
+
+	case "Thought.book":
+		if e.complexity.Thought.Book == nil {
+			break
+		}
+
+		return e.complexity.Thought.Book(childComplexity), true
+
+	case "Thought.bookId":
+		if e.complexity.Thought.BookID == nil {
+			break
+		}
+
+		return e.complexity.Thought.BookID(childComplexity), true
+
+	case "Thought.createdAt":
+		if e.complexity.Thought.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Thought.CreatedAt(childComplexity), true
+
+	case "Thought.id":
+		if e.complexity.Thought.ID == nil {
+			break
+		}
+
+		return e.complexity.Thought.ID(childComplexity), true
+
+	case "Thought.text":
+		if e.complexity.Thought.Text == nil {
+			break
+		}
+
+		return e.complexity.Thought.Text(childComplexity), true
+
+	case "Thought.user":
+		if e.complexity.Thought.User == nil {
+			break
+		}
+
+		return e.complexity.Thought.User(childComplexity), true
+
+	case "Thought.userId":
+		if e.complexity.Thought.UserID == nil {
+			break
+		}
+
+		return e.complexity.Thought.UserID(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -942,6 +1049,25 @@ directive @goField(
   name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
+	{Name: "graph/thought.graphqls", Input: `type Thought {
+  id: ID!
+  text: String!
+  createdAt: Time!
+  userId: ID!
+  user: User! @goField(forceResolver: true)
+  bookId: ID
+  book: Book @goField(forceResolver: true)
+}
+
+extend type Query {
+  thoughts(userId: ID, limit: Int!, before: Int): [Thought!]!
+}
+
+extend type Mutation {
+  thoughtCreate(text: String!, bookId: ID): Thought!
+  thoughtDelete(id: ID!): Boolean!
+}
+`, BuiltIn: false},
 	{Name: "graph/user.graphqls", Input: `type User {
   id: ID!
   name: String!
@@ -1025,6 +1151,45 @@ func (ec *executionContext) field_Mutation_meUpdate_args(ctx context.Context, ra
 		}
 	}
 	args["description"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_thoughtCreate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["text"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["text"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["bookId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bookId"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["bookId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_thoughtDelete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1268,6 +1433,39 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["skip"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_thoughts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
+	var arg2 *int
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
 	return args, nil
 }
 
@@ -2603,6 +2801,90 @@ func (ec *executionContext) _Mutation_inventoryClaimDo(ctx context.Context, fiel
 	return ec.marshalNInventoryClaim2ᚖbookstopᚋgraphᚋmodelᚐInventoryClaim(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_thoughtCreate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_thoughtCreate_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ThoughtCreate(rctx, args["text"].(string), args["bookId"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Thought)
+	fc.Result = res
+	return ec.marshalNThought2ᚖbookstopᚋgraphᚋmodelᚐThought(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_thoughtDelete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_thoughtDelete_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ThoughtDelete(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_meUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3235,6 +3517,48 @@ func (ec *executionContext) _Query_locations(ctx context.Context, field graphql.
 	return ec.marshalNLocation2ᚕᚖbookstopᚋgraphᚋmodelᚐLocationᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_thoughts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_thoughts_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Thoughts(rctx, args["userId"].(*string), args["limit"].(int), args["before"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Thought)
+	fc.Result = res
+	return ec.marshalNThought2ᚕᚖbookstopᚋgraphᚋmodelᚐThoughtᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3456,6 +3780,245 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_id(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_text(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Text, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_userId(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_user(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Thought().User(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖbookstopᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_bookId(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BookID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Thought_book(ctx context.Context, field graphql.CollectedField, obj *model.Thought) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Thought",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Thought().Book(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Book)
+	fc.Result = res
+	return ec.marshalOBook2ᚖbookstopᚋgraphᚋmodelᚐBook(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -5405,6 +5968,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "thoughtCreate":
+			out.Values[i] = ec._Mutation_thoughtCreate(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "thoughtDelete":
+			out.Values[i] = ec._Mutation_thoughtDelete(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "meUpdate":
 			out.Values[i] = ec._Mutation_meUpdate(ctx, field)
 		case "userBookAdd":
@@ -5607,6 +6180,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "thoughts":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_thoughts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "me":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -5658,6 +6245,75 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var thoughtImplementors = []string{"Thought"}
+
+func (ec *executionContext) _Thought(ctx context.Context, sel ast.SelectionSet, obj *model.Thought) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, thoughtImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Thought")
+		case "id":
+			out.Values[i] = ec._Thought_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "text":
+			out.Values[i] = ec._Thought_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._Thought_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "userId":
+			out.Values[i] = ec._Thought_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "user":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thought_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "bookId":
+			out.Values[i] = ec._Thought_bookId(ctx, field, obj)
+		case "book":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Thought_book(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6541,6 +7197,64 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNThought2bookstopᚋgraphᚋmodelᚐThought(ctx context.Context, sel ast.SelectionSet, v model.Thought) graphql.Marshaler {
+	return ec._Thought(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNThought2ᚕᚖbookstopᚋgraphᚋmodelᚐThoughtᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Thought) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNThought2ᚖbookstopᚋgraphᚋmodelᚐThought(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNThought2ᚖbookstopᚋgraphᚋmodelᚐThought(ctx context.Context, sel ast.SelectionSet, v *model.Thought) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Thought(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
