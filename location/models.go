@@ -61,7 +61,7 @@ func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
 	return results, nil
 }
 
-func FindManyByIds(ctx context.Context, ids []int) ([]*Location, []error) {
+func FindManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v

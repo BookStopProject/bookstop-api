@@ -17,8 +17,8 @@ import (
 )
 
 func (r *inventoryResolver) UserBook(ctx context.Context, obj *model.Inventory) (*model.UserBook, error) {
-	intId, _ := strconv.Atoi(obj.UserBookID)
-	ub, err := loader.For(ctx).UserBookById.Load(intId)
+	intID, _ := strconv.Atoi(obj.UserBookID)
+	ub, err := loader.For(ctx).UserBookByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +26,8 @@ func (r *inventoryResolver) UserBook(ctx context.Context, obj *model.Inventory) 
 }
 
 func (r *inventoryResolver) Location(ctx context.Context, obj *model.Inventory) (*model.Location, error) {
-	intId, _ := strconv.Atoi(obj.LocationID)
-	loc, err := loader.For(ctx).LocationById.Load(intId)
+	intID, _ := strconv.Atoi(obj.LocationID)
+	loc, err := loader.For(ctx).LocationByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +35,8 @@ func (r *inventoryResolver) Location(ctx context.Context, obj *model.Inventory) 
 }
 
 func (r *inventoryClaimResolver) Inventory(ctx context.Context, obj *model.InventoryClaim) (*model.Inventory, error) {
-	intId, _ := strconv.Atoi(obj.InventoryID)
-	inv, err := loader.For(ctx).InventoryById.Load(intId)
+	intID, _ := strconv.Atoi(obj.InventoryID)
+	inv, err := loader.For(ctx).InventoryByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (r *inventoryClaimResolver) Inventory(ctx context.Context, obj *model.Inven
 }
 
 func (r *mutationResolver) InventoryClaimDo(ctx context.Context, id string) (*model.InventoryClaim, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (r *mutationResolver) InventoryClaimDo(ctx context.Context, id string) (*mo
 	if usr == nil {
 		return nil, auth.ErrUnauthorized
 	}
-	claim, err := inventory.DoInventoryClaim(ctx, int(usr.ID.Int), intId)
+	claim, err := inventory.DoInventoryClaim(ctx, int(usr.ID.Int), intID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,13 +66,13 @@ func (r *queryResolver) Inventories(ctx context.Context, bookID *string, locatio
 	var invs []*inventory.Inventory
 	var err error
 	if bookID != nil {
-		invs, err = inventory.FindManyByBookId(ctx, *bookID, true)
+		invs, err = inventory.FindManyByBookID(ctx, *bookID, true)
 	} else if locationID != nil {
-		intId, intErr := strconv.Atoi(*locationID)
+		intID, intErr := strconv.Atoi(*locationID)
 		if intErr != nil {
 			return nil, err
 		}
-		invs, err = inventory.FindManyByLocationId(ctx, intId, true)
+		invs, err = inventory.FindManyByLocationID(ctx, intID, true)
 	} else {
 		return nil, errors.New("must provide either bookID or locationID")
 	}
@@ -94,7 +94,7 @@ func (r *queryResolver) InventoryClaimsMine(ctx context.Context) ([]*model.Inven
 	if usr == nil {
 		return nil, auth.ErrUnauthorized
 	}
-	invs, err := inventory.FindManyClaimsByUserId(ctx, int(usr.ID.Int))
+	invs, err := inventory.FindManyClaimsByUserID(ctx, int(usr.ID.Int))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (r *queryResolver) InventoryClaimsMine(ctx context.Context) ([]*model.Inven
 }
 
 func (r *queryResolver) InventoryClaimToken(ctx context.Context, id string) (string, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +117,7 @@ func (r *queryResolver) InventoryClaimToken(ctx context.Context, id string) (str
 	if usr == nil {
 		return "", auth.ErrUnauthorized
 	}
-	return inventory.GenerateClaimToken(ctx, int(usr.ID.Int), intId)
+	return inventory.GenerateClaimToken(ctx, int(usr.ID.Int), intID)
 }
 
 // Inventory returns generated.InventoryResolver implementation.

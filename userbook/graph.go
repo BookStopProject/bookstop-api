@@ -14,8 +14,8 @@ func ToGraph(userBook *UserBook) *model.UserBook {
 
 	val := model.UserBook{
 		ID:     strconv.Itoa(int(userBook.ID.Int)),
-		BookID: userBook.BookId.String,
-		UserID: strconv.Itoa(int(userBook.UserId.Int)),
+		BookID: userBook.BookID.String,
+		UserID: strconv.Itoa(int(userBook.UserID.Int)),
 	}
 
 	if userBook.StartedAt.Status == pgtype.Present {
@@ -29,8 +29,8 @@ func ToGraph(userBook *UserBook) *model.UserBook {
 	}
 
 	if userBook.IDOriginal.Status == pgtype.Present {
-		originalId := strconv.Itoa(int(userBook.IDOriginal.Int))
-		val.OriginalUserBookID = &originalId
+		originalID := strconv.Itoa(int(userBook.IDOriginal.Int))
+		val.OriginalUserBookID = &originalID
 	}
 
 	return &val

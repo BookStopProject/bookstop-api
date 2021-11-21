@@ -9,8 +9,8 @@ import (
 
 const allSelects = "id, user_book_id_old, user_book_id_new, exchanged_at"
 
-func FindExchangesByUserBookId(ctx context.Context, ubId int) ([]*model.Exchange, error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.exchange WHERE user_book_id_old = $1 OR user_book_id_new = $1 OR user_book_id_original = $1 ORDER BY id DESC", ubId)
+func FindExchangesByUserBookID(ctx context.Context, ubID int) ([]*model.Exchange, error) {
+	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.exchange WHERE user_book_id_old = $1 OR user_book_id_new = $1 OR user_book_id_original = $1 ORDER BY id DESC", ubID)
 
 	if err != nil {
 		return nil, err
@@ -22,19 +22,19 @@ func FindExchangesByUserBookId(ctx context.Context, ubId int) ([]*model.Exchange
 
 	for rows.Next() {
 		exc := &model.Exchange{}
-		var exchangeId int
-		var userBookIdOld int
-		var userBookIdNew int
+		var exchangeID int
+		var userBookIDOld int
+		var userBookIDNew int
 		err = rows.Scan(
-			&exchangeId,
-			&userBookIdOld,
-			&userBookIdNew,
+			&exchangeID,
+			&userBookIDOld,
+			&userBookIDNew,
 			&exc.ExchangedAt,
 		)
 
-		exc.ID = strconv.Itoa(exchangeId)
-		exc.UserBookIDOld = strconv.Itoa(userBookIdOld)
-		exc.UserBookIDNew = strconv.Itoa(userBookIdNew)
+		exc.ID = strconv.Itoa(exchangeID)
+		exc.UserBookIDOld = strconv.Itoa(userBookIDOld)
+		exc.UserBookIDNew = strconv.Itoa(userBookIDNew)
 
 		if err != nil {
 			return nil, err

@@ -13,8 +13,8 @@ import (
 
 type UserBook struct {
 	ID         pgtype.Int4
-	UserId     pgtype.Int4
-	BookId     pgtype.Varchar
+	UserID     pgtype.Int4
+	BookID     pgtype.Varchar
 	StartedAt  pgtype.Date
 	EndedAt    pgtype.Date
 	IDOriginal pgtype.Int4
@@ -55,8 +55,8 @@ func scanRow(row *pgx.Row) (*UserBook, error) {
 	ub := &UserBook{}
 	err := (*row).Scan(
 		&ub.ID,
-		&ub.UserId,
-		&ub.BookId,
+		&ub.UserID,
+		&ub.BookID,
 		&ub.StartedAt,
 		&ub.EndedAt,
 		&ub.IDOriginal,
@@ -72,8 +72,8 @@ func scanRows(rows *pgx.Rows) (userBooks []*UserBook, errs []error) {
 		ub := &UserBook{}
 		err := (*rows).Scan(
 			&ub.ID,
-			&ub.UserId,
-			&ub.BookId,
+			&ub.UserID,
+			&ub.BookID,
 			&ub.StartedAt,
 			&ub.EndedAt,
 			&ub.IDOriginal,
@@ -89,7 +89,7 @@ func scanRows(rows *pgx.Rows) (userBooks []*UserBook, errs []error) {
 	return
 }
 
-func FindById(ctx context.Context, id int) (*UserBook, error) {
+func FindByID(ctx context.Context, id int) (*UserBook, error) {
 	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE id = $1", id)
 	ub, err := scanRow(&row)
 	if err != nil {
@@ -101,9 +101,9 @@ func FindById(ctx context.Context, id int) (*UserBook, error) {
 	return ub, nil
 }
 
-func Create(ctx context.Context, userId int, bookId string, startedAt *string, endedAt *string) (*UserBook, error) {
+func Create(ctx context.Context, userID int, bookID string, startedAt *string, endedAt *string) (*UserBook, error) {
 	// Verify book available
-	b, err := book.FindById(ctx, bookId)
+	b, err := book.FindByID(ctx, bookID)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func Create(ctx context.Context, userId int, bookId string, startedAt *string, e
 
 	row := db.Conn.QueryRow(ctx, `INSERT INTO public.user_book(
 		user_id, book_id, started_at, ended_at)
-		VALUES ($1, $2, $3, $4) RETURNING `+allSelects, userId, bookId, startedAt, endedAt)
+		VALUES ($1, $2, $3, $4) RETURNING `+allSelects, userID, bookID, startedAt, endedAt)
 
 	ub, err := scanRow(&row)
 
@@ -128,16 +128,16 @@ func Create(ctx context.Context, userId int, bookId string, startedAt *string, e
 	return ub, nil
 }
 
-func IsOwner(ctx context.Context, userId int, id int) (bool, error) {
-	var ubUserId int
-	err := db.Conn.QueryRow(ctx, "SELECT user_id FROM public.user_book WHERE id = $1", id).Scan(&ubUserId)
+func IsOwner(ctx context.Context, userID int, id int) (bool, error) {
+	var ubUserID int
+	err := db.Conn.QueryRow(ctx, "SELECT user_id FROM public.user_book WHERE id = $1", id).Scan(&ubUserID)
 	if err != nil {
 		return false, err
 	}
-	return ubUserId == userId, nil
+	return ubUserID == userID, nil
 }
 
-func FindManyByIds(ctx context.Context, ids []int) ([]*UserBook, []error) {
+func FindManyByIDs(ctx context.Context, ids []int) ([]*UserBook, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -153,8 +153,8 @@ func FindManyByIds(ctx context.Context, ids []int) ([]*UserBook, []error) {
 	return scanRows(&rows)
 }
 
-func FindManyByUserId(ctx context.Context, userId int) ([]*UserBook, []error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE user_id = $1 ORDER BY id DESC", userId)
+func FindManyByUserID(ctx context.Context, userID int) ([]*UserBook, []error) {
+	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE user_id = $1 ORDER BY id DESC", userID)
 
 	if err != nil {
 		panic(err)
@@ -165,7 +165,7 @@ func FindManyByUserId(ctx context.Context, userId int) ([]*UserBook, []error) {
 	return scanRows(&rows)
 }
 
-func UpdateById(ctx context.Context, id int, startedAt *string, endedAt *string) (*UserBook, error) {
+func UpdateByID(ctx context.Context, id int, startedAt *string, endedAt *string) (*UserBook, error) {
 	if startedAt == nil && endedAt == nil {
 		return nil, errors.New("must provide at least one update value")
 	}
@@ -177,7 +177,7 @@ func UpdateById(ctx context.Context, id int, startedAt *string, endedAt *string)
 	return scanRow(&row)
 }
 
-func DeleteById(ctx context.Context, id int) (bool, error) {
+func DeleteByID(ctx context.Context, id int) (bool, error) {
 	rows, err := db.Conn.Query(ctx, "DELETE FROM public.user_book WHERE id = $1", id)
 	if err != nil {
 		return false, err

@@ -14,11 +14,11 @@ import (
 const loadersKey = "dataloaders"
 
 type Loaders struct {
-	UserById      user.UserLoader
-	BookById      book.BookLoader
-	LocationById  location.LocationLoader
-	UserBookById  userbook.UserBookLoader
-	InventoryById inventory.InventoryLoader
+	UserByID      user.UserLoader
+	BookByID      book.BookLoader
+	LocationByID  location.LocationLoader
+	UserBookByID  userbook.UserBookLoader
+	InventoryByID inventory.InventoryLoader
 }
 
 const Wait = 1 * time.Millisecond
@@ -27,41 +27,41 @@ func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origCtx := r.Context()
 		ctx := context.WithValue(origCtx, loadersKey, &Loaders{
-			UserById: *user.NewUserLoader(user.UserLoaderConfig{
+			UserByID: *user.NewUserLoader(user.UserLoaderConfig{
 				Wait: Wait,
 				Fetch: func(keys []int) ([]*user.User, []error) {
-					return user.FindManyByIds(origCtx, keys)
+					return user.FindManyByIDs(origCtx, keys)
 				},
 			}),
-			BookById: *book.NewBookLoader(
+			BookByID: *book.NewBookLoader(
 				book.BookLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []string) ([]*book.Book, []error) {
-						return book.FindManyByIds(origCtx, keys)
+						return book.FindManyByIDs(origCtx, keys)
 					},
 				},
 			),
-			LocationById: *location.NewLocationLoader(
+			LocationByID: *location.NewLocationLoader(
 				location.LocationLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*location.Location, []error) {
-						return location.FindManyByIds(origCtx, keys)
+						return location.FindManyByIDs(origCtx, keys)
 					},
 				},
 			),
-			UserBookById: *userbook.NewUserBookLoader(
+			UserBookByID: *userbook.NewUserBookLoader(
 				userbook.UserBookLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*userbook.UserBook, []error) {
-						return userbook.FindManyByIds(origCtx, keys)
+						return userbook.FindManyByIDs(origCtx, keys)
 					},
 				},
 			),
-			InventoryById: *inventory.NewInventoryLoader(
+			InventoryByID: *inventory.NewInventoryLoader(
 				inventory.InventoryLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*inventory.Inventory, []error) {
-						return inventory.FindManyByIds(origCtx, keys)
+						return inventory.FindManyByIDs(origCtx, keys)
 					},
 				},
 			),

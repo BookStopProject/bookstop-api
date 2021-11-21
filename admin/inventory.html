@@ -15,9 +15,9 @@
     {{ range .Inventories }}
     <tr {{if .RemovedAt}}style="text-decoration: line-through;" {{ end }}>
       <td>{{ .ID }}</td>
-      <td>{{ .LocationId }}</td>
+      <td>{{ .LocationID }}</td>
       <td>{{ .BookID }}</td>
-      <td>{{ .UserBookId }}</td>
+      <td>{{ .UserBookID }}</td>
       <td>{{ .CreatedAt.Format "2006-01-02T15:04:05Z07:00" }}</td>
       <td>
         {{if .RemovedAt}}{{ .RemovedAt.Format "2006-01-02T15:04:05Z07:00"

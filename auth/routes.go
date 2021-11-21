@@ -25,7 +25,7 @@ func GetConf() *oauth2.Config {
 }
 
 type GoogleProfileResponse struct {
-	Id      string  `json:"id"`
+	ID      string  `json:"id"`
 	Email   *string `json:"email"`
 	Name    string  `json:"name"`
 	Picture *string `json:"picture"`

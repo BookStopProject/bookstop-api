@@ -17,17 +17,17 @@ import (
 )
 
 type Inventory struct {
-	Id         pgtype.Int4
+	ID         pgtype.Int4
 	CreatedAt  pgtype.Timestamp
 	RemovedAt  pgtype.Timestamp
-	UserBookId pgtype.Int4
-	LocationId pgtype.Int4
+	UserBookID pgtype.Int4
+	LocationID pgtype.Int4
 }
 
 type InventoryClaim struct {
-	Id          pgtype.Int4
-	UserId      pgtype.Int4
-	InventoryId pgtype.Int4
+	ID          pgtype.Int4
+	UserID      pgtype.Int4
+	InventoryID pgtype.Int4
 	ClaimedAt   pgtype.Timestamp
 }
 
@@ -38,9 +38,9 @@ func scanRows(rows *pgx.Rows) (inventories []*Inventory, errs []error) {
 	for (*rows).Next() {
 		inv := &Inventory{}
 		err := (*rows).Scan(
-			&inv.Id,
-			&inv.UserBookId,
-			&inv.LocationId,
+			&inv.ID,
+			&inv.UserBookID,
+			&inv.LocationID,
 			&inv.CreatedAt,
 			&inv.RemovedAt,
 		)
@@ -57,7 +57,7 @@ func scanRows(rows *pgx.Rows) (inventories []*Inventory, errs []error) {
 
 func scanRow(row *pgx.Row) (*Inventory, error) {
 	inv := Inventory{}
-	err := (*row).Scan(&inv.Id, &inv.UserBookId, &inv.LocationId, &inv.CreatedAt, &inv.RemovedAt)
+	err := (*row).Scan(&inv.ID, &inv.UserBookID, &inv.LocationID, &inv.CreatedAt, &inv.RemovedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func scanRow(row *pgx.Row) (*Inventory, error) {
 const availableOnlyAnd = ` AND NOT EXISTS (SELECT FROM public.inventory_claim WHERE inventory_id = public.inventory.id) 
 AND removed_at IS NULL`
 
-func FindManyByIds(ctx context.Context, ids []int) ([]*Inventory, []error) {
+func FindManyByIDs(ctx context.Context, ids []int) ([]*Inventory, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -83,7 +83,7 @@ func FindManyByIds(ctx context.Context, ids []int) ([]*Inventory, []error) {
 	return scanRows(&rows)
 }
 
-func FindManyByBookId(ctx context.Context, bookId string, availableOnly bool) ([]*Inventory, error) {
+func FindManyByBookID(ctx context.Context, bookID string, availableOnly bool) ([]*Inventory, error) {
 	query := `SELECT ` + allSelects + ` 
 FROM public.inventory
 INNER JOIN public.user_book ON public.inventory.user_book_id = public.user_book.id
@@ -93,7 +93,7 @@ WHERE public.user_book.book_id = $1`
 		query += availableOnlyAnd
 	}
 
-	rows, err := db.Conn.Query(ctx, query, bookId)
+	rows, err := db.Conn.Query(ctx, query, bookID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,14 +108,14 @@ WHERE public.user_book.book_id = $1`
 	return results, nil
 }
 
-func FindManyByLocationId(ctx context.Context, locationId int, availableOnly bool) ([]*Inventory, error) {
+func FindManyByLocationID(ctx context.Context, locationID int, availableOnly bool) ([]*Inventory, error) {
 	query := "SELECT " + allSelects + " FROM public.inventory WHERE location_id = $1 ORDER BY id DESC"
 
 	if availableOnly {
 		query += availableOnlyAnd
 	}
 
-	rows, err := db.Conn.Query(ctx, query, locationId)
+	rows, err := db.Conn.Query(ctx, query, locationID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +130,8 @@ func FindManyByLocationId(ctx context.Context, locationId int, availableOnly boo
 	return results, nil
 }
 
-func FindManyClaimsByUserId(ctx context.Context, userId int) ([]*InventoryClaim, error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelectsClaim+" FROM public.inventory_claim WHERE user_id = $1 ORDER BY id DESC", userId)
+func FindManyClaimsByUserID(ctx context.Context, userID int) ([]*InventoryClaim, error) {
+	rows, err := db.Conn.Query(ctx, "SELECT "+allSelectsClaim+" FROM public.inventory_claim WHERE user_id = $1 ORDER BY id DESC", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -143,9 +143,9 @@ func FindManyClaimsByUserId(ctx context.Context, userId int) ([]*InventoryClaim,
 	for (rows).Next() {
 		cl := &InventoryClaim{}
 		err := (rows).Scan(
-			&cl.Id,
-			&cl.UserId,
-			&cl.InventoryId,
+			&cl.ID,
+			&cl.UserID,
+			&cl.InventoryID,
 			&cl.ClaimedAt,
 		)
 		if err != nil {
@@ -158,8 +158,8 @@ func FindManyClaimsByUserId(ctx context.Context, userId int) ([]*InventoryClaim,
 	return invClaims, nil
 }
 
-func InsertInventoryAndReward(ctx context.Context, ubId int, locId int) (*Inventory, error) {
-	ub, err := userbook.FindById(ctx, ubId)
+func InsertInventoryAndReward(ctx context.Context, ubID int, locID int) (*Inventory, error) {
+	ub, err := userbook.FindByID(ctx, ubID)
 	if err != nil {
 		return nil, err
 	}
@@ -175,14 +175,14 @@ func InsertInventoryAndReward(ctx context.Context, ubId int, locId int) (*Invent
 
 	defer tx.Rollback(ctx)
 
-	row := tx.QueryRow(ctx, "INSERT INTO public.inventory(user_book_id, location_id) VALUES ($1, $2) RETURNING "+allSelects, ubId, locId)
+	row := tx.QueryRow(ctx, "INSERT INTO public.inventory(user_book_id, location_id) VALUES ($1, $2) RETURNING "+allSelects, ubID, locID)
 	inv, err := scanRow(&row)
 	if err != nil {
 		return nil, err
 	}
 
 	var resultedCredit *int
-	err = tx.QueryRow(ctx, "UPDATE public.user SET credit = credit + 1 WHERE id = $1 RETURNING credit", int(ub.UserId.Int)).Scan(&resultedCredit)
+	err = tx.QueryRow(ctx, "UPDATE public.user SET credit = credit + 1 WHERE id = $1 RETURNING credit", int(ub.UserID.Int)).Scan(&resultedCredit)
 
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func InsertInventoryAndReward(ctx context.Context, ubId int, locId int) (*Invent
 	return inv, nil
 }
 
-func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*InventoryClaim, error) {
+func DoInventoryClaim(ctx context.Context, userID int, inventoryID int) (*InventoryClaim, error) {
 	tx, err := db.Conn.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*Invent
 	defer tx.Rollback(ctx)
 
 	balance := 0
-	err = tx.QueryRow(ctx, "SELECT credit FROM public.user WHERE id=$1 FOR UPDATE", userId).Scan(&balance)
+	err = tx.QueryRow(ctx, "SELECT credit FROM public.user WHERE id=$1 FOR UPDATE", userID).Scan(&balance)
 	if err != nil {
 		return nil, err
 	}
@@ -213,8 +213,8 @@ func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*Invent
 		return nil, errors.New("not enough balance")
 	}
 
-	var otherUserId *int
-	err = tx.QueryRow(ctx, "SELECT user_book.user_id FROM public.inventory INNER JOIN public.user_book ON public.inventory.user_book_id = public.user_book.id WHERE public.inventory.id = $1"+availableOnlyAnd, inventoryId).Scan(&otherUserId)
+	var otherUserID *int
+	err = tx.QueryRow(ctx, "SELECT user_book.user_id FROM public.inventory INNER JOIN public.user_book ON public.inventory.user_book_id = public.user_book.id WHERE public.inventory.id = $1"+availableOnlyAnd, inventoryID).Scan(&otherUserID)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -223,12 +223,12 @@ func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*Invent
 		return nil, err
 	}
 
-	if *otherUserId == userId {
+	if *otherUserID == userID {
 		return nil, errors.New("cannot exchange your own book")
 	}
 
 	var resultedCredit *int
-	err = tx.QueryRow(ctx, "UPDATE public.user SET credit = credit - 1 WHERE id = $1 RETURNING credit", userId).Scan(&resultedCredit)
+	err = tx.QueryRow(ctx, "UPDATE public.user SET credit = credit - 1 WHERE id = $1 RETURNING credit", userID).Scan(&resultedCredit)
 
 	if err != nil {
 		return nil, err
@@ -240,10 +240,10 @@ func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*Invent
 
 	invClaim := InventoryClaim{}
 
-	err = tx.QueryRow(ctx, "INSERT INTO public.inventory_claim(user_id, inventory_id) VALUES ($1, $2) RETURNING "+allSelectsClaim, userId, inventoryId).Scan(
-		&invClaim.Id,
-		&invClaim.UserId,
-		&invClaim.InventoryId,
+	err = tx.QueryRow(ctx, "INSERT INTO public.inventory_claim(user_id, inventory_id) VALUES ($1, $2) RETURNING "+allSelectsClaim, userID, inventoryID).Scan(
+		&invClaim.ID,
+		&invClaim.UserID,
+		&invClaim.InventoryID,
 		&invClaim.ClaimedAt,
 	)
 
@@ -258,13 +258,13 @@ func DoInventoryClaim(ctx context.Context, userId int, inventoryId int) (*Invent
 	return &invClaim, nil
 }
 
-func GenerateClaimToken(ctx context.Context, userId int, claimId int) (string, error) {
+func GenerateClaimToken(ctx context.Context, userID int, claimID int) (string, error) {
 	invClaim := InventoryClaim{}
 
-	err := db.Conn.QueryRow(ctx, "SELECT "+allSelectsClaim+" FROM public.inventory_claim WHERE id = $1 AND user_id = $2", claimId, userId).Scan(
-		&invClaim.Id,
-		&invClaim.UserId,
-		&invClaim.InventoryId,
+	err := db.Conn.QueryRow(ctx, "SELECT "+allSelectsClaim+" FROM public.inventory_claim WHERE id = $1 AND user_id = $2", claimID, userID).Scan(
+		&invClaim.ID,
+		&invClaim.UserID,
+		&invClaim.InventoryID,
 		&invClaim.ClaimedAt,
 	)
 
@@ -273,7 +273,7 @@ func GenerateClaimToken(ctx context.Context, userId int, claimId int) (string, e
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   strconv.Itoa(claimId),
+		Subject:   strconv.Itoa(claimID),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
 	})
 
@@ -315,7 +315,7 @@ func VerifyClaimToken(ctx context.Context, tokenString string) (*InventoryClaimD
 		return nil, errors.New("invalid token")
 	}
 
-	claimId := claims["sub"].(string)
+	claimID := claims["sub"].(string)
 
 	detailedInvClaim := InventoryClaimDetailed{}
 	err = db.Conn.QueryRow(ctx, `SELECT inventory_claim.id, inventory_claim.user_id, inventory_id, claimed_at, book_id, location_id, user_book.id_original AS user_book_id_original
@@ -323,10 +323,10 @@ func VerifyClaimToken(ctx context.Context, tokenString string) (*InventoryClaimD
 	INNER JOIN public.inventory ON public.inventory_claim.inventory_id = public.inventory.id
 	INNER JOIN public.user_book ON public.inventory.user_book_id = public.user_book.id
 	WHERE inventory_claim.id = $1 AND inventory.removed_at IS NULL
-`, claimId).Scan(
-		&detailedInvClaim.Id,
-		&detailedInvClaim.UserId,
-		&detailedInvClaim.InventoryId,
+`, claimID).Scan(
+		&detailedInvClaim.ID,
+		&detailedInvClaim.UserID,
+		&detailedInvClaim.InventoryID,
 		&detailedInvClaim.ClaimedAt,
 		&detailedInvClaim.BookID,
 		&detailedInvClaim.LocationID,
@@ -337,7 +337,7 @@ func VerifyClaimToken(ctx context.Context, tokenString string) (*InventoryClaimD
 		return nil, err
 	}
 
-	u, err := user.FindById(ctx, int(detailedInvClaim.UserId.Int))
+	u, err := user.FindByID(ctx, int(detailedInvClaim.UserID.Int))
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func VerifyClaimToken(ctx context.Context, tokenString string) (*InventoryClaimD
 	}
 	detailedInvClaim.User = u
 
-	b, err := book.FindById(ctx, detailedInvClaim.BookID)
+	b, err := book.FindByID(ctx, detailedInvClaim.BookID)
 	if err != nil {
 		return nil, err
 	}
@@ -375,21 +375,21 @@ func DoInventoryCheckoutWithToken(ctx context.Context, tokenString string) (bool
 
 	tNow := time.Now()
 
-	var oldUserBookId int
+	var oldUserBookID int
 
-	err = tx.QueryRow(ctx, "UPDATE public.inventory SET removed_at = $2 WHERE id = $1 RETURNING user_book_id", cl.InventoryId, tNow).Scan(&oldUserBookId)
+	err = tx.QueryRow(ctx, "UPDATE public.inventory SET removed_at = $2 WHERE id = $1 RETURNING user_book_id", cl.InventoryID, tNow).Scan(&oldUserBookID)
 	if err != nil {
 		return false, err
 	}
 
 	if cl.UserBookIDOriginal == nil {
-		cl.UserBookIDOriginal = &oldUserBookId
+		cl.UserBookIDOriginal = &oldUserBookID
 	}
 
-	var newUserBookId int
-	tx.QueryRow(ctx, "INSERT INTO public.user_book(user_id, book_id, id_original) VALUES ($1, $2, $3) RETURNING id", cl.UserId, cl.BookID, cl.UserBookIDOriginal).Scan(&newUserBookId)
+	var newUserBookID int
+	tx.QueryRow(ctx, "INSERT INTO public.user_book(user_id, book_id, id_original) VALUES ($1, $2, $3) RETURNING id", cl.UserID, cl.BookID, cl.UserBookIDOriginal).Scan(&newUserBookID)
 
-	rows, err := tx.Query(ctx, "INSERT INTO public.exchange(user_book_id_old, user_book_id_new, user_book_id_original, exchanged_at) VALUES ($1, $2, $3, $4)", oldUserBookId, newUserBookId, cl.UserBookIDOriginal, tNow)
+	rows, err := tx.Query(ctx, "INSERT INTO public.exchange(user_book_id_old, user_book_id_new, user_book_id_original, exchanged_at) VALUES ($1, $2, $3, $4)", oldUserBookID, newUserBookID, cl.UserBookIDOriginal, tNow)
 	if err != nil {
 		return false, err
 	}

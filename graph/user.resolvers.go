@@ -20,7 +20,7 @@ func (r *mutationResolver) MeUpdate(ctx context.Context, name *string, descripti
 	if usr == nil {
 		return nil, auth.ErrUnauthorized
 	}
-	usr, err = user.UpdateById(ctx, int(usr.ID.Int), name, description)
+	usr, err = user.UpdateByID(ctx, int(usr.ID.Int), name, description)
 	if err != nil {
 		return nil, err
 	}
@@ -41,11 +41,11 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
-	usr, err := loader.For(ctx).UserById.Load(intId)
+	usr, err := loader.For(ctx).UserByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}

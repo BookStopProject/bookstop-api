@@ -17,7 +17,7 @@ import (
 )
 
 func (r *queryResolver) Book(ctx context.Context, id string) (*model.Book, error) {
-	bk, err := loader.For(ctx).BookById.Load(id)
+	bk, err := loader.For(ctx).BookByID.Load(id)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (r *queryResolver) Book(ctx context.Context, id string) (*model.Book, error
 }
 
 func (r *queryResolver) Books(ctx context.Context, ids []string) ([]*model.Book, error) {
-	books, errs := loader.For(ctx).BookById.LoadAll(ids)
+	books, errs := loader.For(ctx).BookByID.LoadAll(ids)
 	for i, err := range errs {
 		if err != nil {
 			graphql.AddError(ctx, gqlerror.Errorf("book "+strconv.Itoa(i)+": "+err.Error()))
@@ -40,19 +40,19 @@ func (r *queryResolver) Browses(ctx context.Context) ([]*model.Browse, error) {
 }
 
 func (r *queryResolver) Browse(ctx context.Context, id string) (*model.Browse, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
-	return browse.FindById(ctx, intId)
+	return browse.FindByID(ctx, intID)
 }
 
 func (r *queryResolver) BrowseBooks(ctx context.Context, id string) ([]*model.Book, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, err
 	}
-	books, _ := browse.FindBooksByBrowseId(ctx, intId)
+	books, _ := browse.FindBooksByBrowseID(ctx, intID)
 
 	results := []*model.Book{}
 	for _, book := range books {

@@ -14,7 +14,7 @@ import (
 type User struct {
 	ID              pgtype.Int4
 	CreatedAt       pgtype.Timestamp
-	OauthId         pgtype.Varchar
+	OauthID         pgtype.Varchar
 	Email           pgtype.Varchar
 	Name            pgtype.Varchar
 	Description     pgtype.Varchar
@@ -34,7 +34,7 @@ func scanRow(row *pgx.Row) (*User, error) {
 	err := (*row).Scan(
 		&user.ID,
 		&user.Name,
-		&user.OauthId,
+		&user.OauthID,
 		&user.Email,
 		&user.Description,
 		&user.ProfileImageUrl,
@@ -53,7 +53,7 @@ func scanRows(rows *pgx.Rows) (users []*User, errs []error) {
 		err := (*rows).Scan(
 			&user.ID,
 			&user.Name,
-			&user.OauthId,
+			&user.OauthID,
 			&user.Email,
 			&user.Description,
 			&user.ProfileImageUrl,
@@ -71,15 +71,15 @@ func scanRows(rows *pgx.Rows) (users []*User, errs []error) {
 	return
 }
 
-func Create(ctx context.Context, name string, oauthId string, email *string, picture *string) (*User, error) {
-	row := db.Conn.QueryRow(ctx, "INSERT INTO public.user(name, oauth_id, email, profile_image_url) VALUES ($1, $2, $3, $4) RETURNING "+allSelects, name, oauthId, email, picture)
+func Create(ctx context.Context, name string, oauthID string, email *string, picture *string) (*User, error) {
+	row := db.Conn.QueryRow(ctx, "INSERT INTO public.user(name, oauth_id, email, profile_image_url) VALUES ($1, $2, $3, $4) RETURNING "+allSelects, name, oauthID, email, picture)
 	return scanRow(&row)
 }
 
-func FindIdByOauthId(ctx context.Context, oauthId string) (*int, error) {
+func FindIDByOauthID(ctx context.Context, oauthID string) (*int, error) {
 	var id int
 
-	err := db.Conn.QueryRow(ctx, "SELECT id FROM public.user WHERE oauth_id = $1", oauthId).Scan(
+	err := db.Conn.QueryRow(ctx, "SELECT id FROM public.user WHERE oauth_id = $1", oauthID).Scan(
 		&id,
 	)
 
@@ -93,7 +93,7 @@ func FindIdByOauthId(ctx context.Context, oauthId string) (*int, error) {
 	return &id, err
 }
 
-func FindById(ctx context.Context, id int) (*User, error) {
+func FindByID(ctx context.Context, id int) (*User, error) {
 	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user WHERE id = $1", id)
 
 	user, err := scanRow(&row)
@@ -118,7 +118,7 @@ func FindAll(ctx context.Context) ([]*User, []error) {
 	return scanRows(&rows)
 }
 
-func FindManyByIds(ctx context.Context, ids []int) ([]*User, []error) {
+func FindManyByIDs(ctx context.Context, ids []int) ([]*User, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -134,7 +134,7 @@ func FindManyByIds(ctx context.Context, ids []int) ([]*User, []error) {
 	return scanRows(&rows)
 }
 
-func UpdateById(ctx context.Context, id int, name *string, description *string) (*User, error) {
+func UpdateByID(ctx context.Context, id int, name *string, description *string) (*User, error) {
 	if name == nil && description == nil {
 		return nil, errors.New("must provide at least one update value")
 	}

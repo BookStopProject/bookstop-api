@@ -35,7 +35,7 @@ func ForContext(ctx context.Context) (*user.User, error) {
 		return nil, nil
 	}
 
-	userId, err := db.RDB.Get(ctx, redisAuthKeyPrefix+authCode).Result()
+	userID, err := db.RDB.Get(ctx, redisAuthKeyPrefix+authCode).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
@@ -43,12 +43,12 @@ func ForContext(ctx context.Context) (*user.User, error) {
 		return nil, err
 	}
 
-	userIdInt, err := strconv.Atoi(userId)
+	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return user.FindById(ctx, userIdInt)
+	return user.FindByID(ctx, userIDInt)
 }
 
 func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error) {
@@ -58,19 +58,19 @@ func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error)
 		signOut(ctx, prevAuthCode)
 	}
 
-	userId, err := user.FindIdByOauthId(ctx, profile.Id)
+	userID, err := user.FindIDByOauthID(ctx, profile.ID)
 	if err != nil {
 		return "", err
 	}
 
-	if userId == nil {
+	if userID == nil {
 		// Create new user
-		u, err := user.Create(ctx, profile.Name, profile.Id, profile.Email, profile.Picture)
+		u, err := user.Create(ctx, profile.Name, profile.ID, profile.Email, profile.Picture)
 		if err != nil {
 			return "", err
 		}
-		newUserId := int(u.ID.Int)
-		userId = &newUserId
+		newUserID := int(u.ID.Int)
+		userID = &newUserID
 	}
 
 	authCode, err := gonanoid.New()
@@ -78,7 +78,7 @@ func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error)
 		return "", err
 	}
 
-	_, err = db.RDB.Set(ctx, redisAuthKeyPrefix+authCode, *userId, 0).Result()
+	_, err = db.RDB.Set(ctx, redisAuthKeyPrefix+authCode, *userID, 0).Result()
 
 	if err != nil {
 		return "", err

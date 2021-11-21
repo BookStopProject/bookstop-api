@@ -13,9 +13,9 @@ func ToGraph(inventory *Inventory) *model.Inventory {
 	}
 
 	val := model.Inventory{
-		ID:         strconv.Itoa(int(inventory.Id.Int)),
-		UserBookID: strconv.Itoa(int(inventory.UserBookId.Int)),
-		LocationID: strconv.Itoa(int(inventory.LocationId.Int)),
+		ID:         strconv.Itoa(int(inventory.ID.Int)),
+		UserBookID: strconv.Itoa(int(inventory.UserBookID.Int)),
+		LocationID: strconv.Itoa(int(inventory.LocationID.Int)),
 		Removed:    inventory.RemovedAt.Status == pgtype.Present,
 	}
 
@@ -28,8 +28,8 @@ func ToGraphClaim(claim *InventoryClaim) *model.InventoryClaim {
 	}
 
 	val := model.InventoryClaim{
-		ID:          strconv.Itoa(int(claim.Id.Int)),
-		InventoryID: strconv.Itoa(int(claim.InventoryId.Int)),
+		ID:          strconv.Itoa(int(claim.ID.Int)),
+		InventoryID: strconv.Itoa(int(claim.InventoryID.Int)),
 		ClaimedAt:   claim.ClaimedAt.Time,
 	}
 

@@ -14,8 +14,8 @@ import (
 )
 
 func (r *exchangeResolver) UserBookOld(ctx context.Context, obj *model.Exchange) (*model.UserBook, error) {
-	intId, _ := strconv.Atoi(obj.UserBookIDOld)
-	ub, err := loader.For(ctx).UserBookById.Load(intId)
+	intID, _ := strconv.Atoi(obj.UserBookIDOld)
+	ub, err := loader.For(ctx).UserBookByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +23,8 @@ func (r *exchangeResolver) UserBookOld(ctx context.Context, obj *model.Exchange)
 }
 
 func (r *exchangeResolver) UserBookNew(ctx context.Context, obj *model.Exchange) (*model.UserBook, error) {
-	intId, _ := strconv.Atoi(obj.UserBookIDNew)
-	ub, err := loader.For(ctx).UserBookById.Load(intId)
+	intID, _ := strconv.Atoi(obj.UserBookIDNew)
+	ub, err := loader.For(ctx).UserBookByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +32,11 @@ func (r *exchangeResolver) UserBookNew(ctx context.Context, obj *model.Exchange)
 }
 
 func (r *queryResolver) Exchanges(ctx context.Context, userBookID string) ([]*model.Exchange, error) {
-	intId, err := strconv.Atoi(userBookID)
+	intID, err := strconv.Atoi(userBookID)
 	if err != nil {
 		return nil, err
 	}
-	return exchange.FindExchangesByUserBookId(ctx, intId)
+	return exchange.FindExchangesByUserBookID(ctx, intID)
 }
 
 // Exchange returns generated.ExchangeResolver implementation.

@@ -87,14 +87,14 @@ type DataBrowseEach struct {
 var tmplBrowseEach = template.Must(template.ParseFiles("admin/browse_each.html", "admin/base.html"))
 
 func apiBrowseEach(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	intId, err := strconv.Atoi(ps.ByName("id"))
+	intID, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
 	}
 	ctx := r.Context()
-	result, err := browse.FindById(ctx, intId)
-	resultBooks, errs := browse.FindBooksByBrowseId(ctx, intId)
+	result, err := browse.FindByID(ctx, intID)
+	resultBooks, errs := browse.FindBooksByBrowseID(ctx, intID)
 
 	var books []*book.Book
 	for idx, b := range resultBooks {
@@ -121,8 +121,8 @@ func apiBrowseEach(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }
 
 func apiBrowseEachEdit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	strId := ps.ByName("id")
-	intId, err := strconv.Atoi(strId)
+	strID := ps.ByName("id")
+	intID, err := strconv.Atoi(strID)
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
@@ -133,13 +133,13 @@ func apiBrowseEachEdit(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	_, err = browse.UpdateById(r.Context(), intId,
+	_, err = browse.UpdateByID(r.Context(), intID,
 		r.PostForm.Get("name"),
 		r.PostForm.Get("description"),
 		r.PostForm.Get("started_at"),
 		r.PostForm.Get("ended_at"))
 
-	redirectUrl := "/admin/browse/" + strId
+	redirectUrl := "/admin/browse/" + strID
 
 	if err != nil {
 		redirectUrl += "?error=" + err.Error()
@@ -150,13 +150,13 @@ func apiBrowseEachEdit(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 }
 
 func apiBrowseEachDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	intId, err := strconv.Atoi(ps.ByName("id"))
+	intID, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
 	}
 
-	_, err = browse.DeleteById(r.Context(), intId)
+	_, err = browse.DeleteByID(r.Context(), intID)
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
@@ -166,10 +166,10 @@ func apiBrowseEachDelete(w http.ResponseWriter, r *http.Request, ps httprouter.P
 }
 
 func apiBrowseEachAddBooks(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	strId := ps.ByName("id")
-	redirectUrl := "/admin/browse/" + strId
+	strID := ps.ByName("id")
+	redirectUrl := "/admin/browse/" + strID
 
-	intId, err := strconv.Atoi(strId)
+	intID, err := strconv.Atoi(strID)
 	if err != nil {
 		http.Redirect(w, r, redirectUrl+err.Error(), http.StatusFound)
 		return
@@ -180,7 +180,7 @@ func apiBrowseEachAddBooks(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	_, err = browse.AddBooksByIds(r.Context(), intId, strings.Split(r.PostForm.Get("book_ids"), ","))
+	_, err = browse.AddBooksByIDs(r.Context(), intID, strings.Split(r.PostForm.Get("book_ids"), ","))
 	if err != nil {
 		http.Redirect(w, r, redirectUrl+"?error="+err.Error(), http.StatusFound)
 		return
@@ -190,8 +190,8 @@ func apiBrowseEachAddBooks(w http.ResponseWriter, r *http.Request, ps httprouter
 }
 
 func apiBrowseEachDeleteBook(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	strId := ps.ByName("id")
-	intId, err := strconv.Atoi(strId)
+	strID := ps.ByName("id")
+	intID, err := strconv.Atoi(strID)
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
@@ -202,13 +202,13 @@ func apiBrowseEachDeleteBook(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	_, err = browse.DeleteBooksByIds(r.Context(), intId, strings.Split(r.URL.Query().Get("book_ids"), ","))
+	_, err = browse.DeleteBooksByIDs(r.Context(), intID, strings.Split(r.URL.Query().Get("book_ids"), ","))
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 		return
 	}
 
-	http.Redirect(w, r, "/admin/browse/"+strId+"?deleted=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/browse/"+strID+"?deleted=1", http.StatusSeeOther)
 }
 
 // /admin/inventory
@@ -223,8 +223,8 @@ type DataInventoryItem struct {
 	BookID     string
 	CreatedAt  *time.Time
 	RemovedAt  *time.Time
-	UserBookId int
-	LocationId int
+	UserBookID int
+	LocationID int
 }
 
 func apiInventory(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -240,7 +240,7 @@ func apiInventory(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	for rows.Next() {
 		iv := DataInventoryItem{}
-		err := rows.Scan(&iv.ID, &iv.BookID, &iv.CreatedAt, &iv.RemovedAt, &iv.UserBookId, &iv.LocationId)
+		err := rows.Scan(&iv.ID, &iv.BookID, &iv.CreatedAt, &iv.RemovedAt, &iv.UserBookID, &iv.LocationID)
 		if err != nil {
 			writeErr(w, err, http.StatusInternalServerError)
 			return
@@ -324,12 +324,12 @@ func apiCheckInCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 		return
 	}
 
-	ubId, err := strconv.Atoi(r.PostForm.Get("user_book_id"))
+	ubID, err := strconv.Atoi(r.PostForm.Get("user_book_id"))
 	if err != nil {
 		http.Redirect(w, r, "/admin/check-in?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
-	locId, err := strconv.Atoi(r.PostForm.Get("location_id"))
+	locID, err := strconv.Atoi(r.PostForm.Get("location_id"))
 	if err != nil {
 		http.Redirect(w, r, "/admin/check-in?error="+err.Error(), http.StatusSeeOther)
 		return
@@ -337,14 +337,14 @@ func apiCheckInCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 
 	ctx := r.Context()
 
-	inv, err := inventory.InsertInventoryAndReward(ctx, ubId, locId)
+	inv, err := inventory.InsertInventoryAndReward(ctx, ubID, locID)
 
 	if err != nil {
 		http.Redirect(w, r, "/admin/check-in?error="+err.Error(), http.StatusSeeOther)
 		return
 	}
 
-	ub, _ := userbook.FindById(ctx, int(inv.UserBookId.Int))
+	ub, _ := userbook.FindByID(ctx, int(inv.UserBookID.Int))
 	if ub == nil {
 		writeErr(w, errors.New("cannot load user book"), http.StatusInternalServerError)
 		return
@@ -417,7 +417,7 @@ func apiUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func apiUserMoneyHack(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	intId, err := strconv.Atoi(ps.ByName("id"))
+	intID, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
 		writeErr(w, err, http.StatusBadRequest)
 	}
@@ -426,7 +426,7 @@ func apiUserMoneyHack(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		writeErr(w, err, http.StatusBadRequest)
 	}
 	var intNewMoney int
-	err = db.Conn.QueryRow(r.Context(), "UPDATE public.user SET credit=$2 WHERE id=$1 RETURNING credit", intId, intMoney).Scan(&intNewMoney)
+	err = db.Conn.QueryRow(r.Context(), "UPDATE public.user SET credit=$2 WHERE id=$1 RETURNING credit", intID, intMoney).Scan(&intNewMoney)
 	if err != nil {
 		writeErr(w, err, http.StatusInternalServerError)
 	}

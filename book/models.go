@@ -72,7 +72,7 @@ func getCache(ctx context.Context, ids []string) ([]*Book, error) {
 	return results, nil
 }
 
-func findByIdViaAPI(ctx context.Context, id string) (*Book, error) {
+func findByIDViaAPI(ctx context.Context, id string) (*Book, error) {
 	srv, err := NewBookService(ctx)
 
 	if err != nil {
@@ -93,7 +93,7 @@ func findByIdViaAPI(ctx context.Context, id string) (*Book, error) {
 	return ToGraph(toMd(volume)), nil
 }
 
-func FindById(ctx context.Context, id string) (*Book, error) {
+func FindByID(ctx context.Context, id string) (*Book, error) {
 	cached, err := getCache(ctx, []string{id})
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func FindById(ctx context.Context, id string) (*Book, error) {
 		return cached[0], nil
 	}
 
-	book, err := findByIdViaAPI(ctx, id)
+	book, err := findByIDViaAPI(ctx, id)
 
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func FindById(ctx context.Context, id string) (*Book, error) {
 	return book, nil
 }
 
-func FindManyByIds(ctx context.Context, ids []string) ([]*Book, []error) {
+func FindManyByIDs(ctx context.Context, ids []string) ([]*Book, []error) {
 	if len(ids) <= 0 {
 		return []*Book{}, []error{}
 	}
@@ -129,7 +129,7 @@ func FindManyByIds(ctx context.Context, ids []string) ([]*Book, []error) {
 
 	for idx, cachedBook := range result {
 		if cachedBook == nil {
-			loadedBook, err := findByIdViaAPI(ctx, ids[idx])
+			loadedBook, err := findByIDViaAPI(ctx, ids[idx])
 
 			if err != nil {
 				errors[idx] = err

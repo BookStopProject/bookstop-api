@@ -54,18 +54,18 @@ func scanRows(rows *pgx.Rows) ([]*Thought, error) {
 	return thoughts, nil
 }
 
-func IsOwner(ctx context.Context, userId int, id int) (bool, error) {
-	var ubUserId int
-	err := db.Conn.QueryRow(ctx, "SELECT user_id FROM public.thought WHERE id = $1", id).Scan(&ubUserId)
+func IsOwner(ctx context.Context, userID int, id int) (bool, error) {
+	var ubUserID int
+	err := db.Conn.QueryRow(ctx, "SELECT user_id FROM public.thought WHERE id = $1", id).Scan(&ubUserID)
 	if err != nil {
 		return false, err
 	}
-	return ubUserId == userId, nil
+	return ubUserID == userID, nil
 }
 
 func Create(ctx context.Context, userID int, text string, bookID *string) (*Thought, error) {
 	if bookID != nil {
-		b, _ := book.FindById(ctx, *bookID)
+		b, _ := book.FindByID(ctx, *bookID)
 		if b == nil {
 			return nil, errors.New("cannot find book")
 		}
@@ -100,7 +100,7 @@ func FindManyByUserID(ctx context.Context, userID int, limit int, before *int) (
 	return scanRows(&rows)
 }
 
-func DeleteById(ctx context.Context, id int) (bool, error) {
+func DeleteByID(ctx context.Context, id int) (bool, error) {
 	rows, err := db.Conn.Query(ctx, "DELETE FROM public.thought WHERE id = $1", id)
 	if err != nil {
 		return false, err

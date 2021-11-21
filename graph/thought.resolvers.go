@@ -30,7 +30,7 @@ func (r *mutationResolver) ThoughtCreate(ctx context.Context, text string, bookI
 }
 
 func (r *mutationResolver) ThoughtDelete(ctx context.Context, id string) (bool, error) {
-	intId, err := strconv.Atoi(id)
+	intID, err := strconv.Atoi(id)
 	if err != nil {
 		return false, err
 	}
@@ -41,14 +41,14 @@ func (r *mutationResolver) ThoughtDelete(ctx context.Context, id string) (bool, 
 	if usr == nil {
 		return false, auth.ErrUnauthorized
 	}
-	owned, err := thought.IsOwner(ctx, int(usr.ID.Int), intId)
+	owned, err := thought.IsOwner(ctx, int(usr.ID.Int), intID)
 	if err != nil {
 		return false, err
 	}
 	if !owned {
 		return false, auth.ErrForbidden
 	}
-	return thought.DeleteById(ctx, intId)
+	return thought.DeleteByID(ctx, intID)
 }
 
 func (r *queryResolver) Thoughts(ctx context.Context, userID *string, limit int, before *int) ([]*model.Thought, error) {
@@ -58,11 +58,11 @@ func (r *queryResolver) Thoughts(ctx context.Context, userID *string, limit int,
 		return nil, err
 	}
 	if userID != nil {
-		intId, errConv := strconv.Atoi(*userID)
+		intID, errConv := strconv.Atoi(*userID)
 		if errConv != nil {
 			return nil, errConv
 		}
-		results, err = thought.FindManyByUserID(ctx, intId, limit, before)
+		results, err = thought.FindManyByUserID(ctx, intID, limit, before)
 	} else {
 		results, err = thought.FindAll(ctx, limit, before)
 	}
@@ -77,8 +77,8 @@ func (r *queryResolver) Thoughts(ctx context.Context, userID *string, limit int,
 }
 
 func (r *thoughtResolver) User(ctx context.Context, obj *model.Thought) (*model.User, error) {
-	intId, _ := strconv.Atoi(obj.UserID)
-	usr, err := loader.For(ctx).UserById.Load(intId)
+	intID, _ := strconv.Atoi(obj.UserID)
+	usr, err := loader.For(ctx).UserByID.Load(intID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (r *thoughtResolver) Book(ctx context.Context, obj *model.Thought) (*model.
 	if obj.BookID == nil {
 		return nil, nil
 	}
-	return loader.For(ctx).BookById.Load(*obj.BookID)
+	return loader.For(ctx).BookByID.Load(*obj.BookID)
 }
 
 // Thought returns generated.ThoughtResolver implementation.
