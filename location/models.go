@@ -61,7 +61,7 @@ func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
 	return results, nil
 }
 
-func FindManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
+func LoadManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -71,7 +71,24 @@ func FindManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
 		panic(err)
 	}
 	defer rows.Close()
-	return scanRows(&rows)
+	result, errs := scanRows(&rows)
+
+	idToPos := make(map[int]int)
+
+	for i, ub := range result {
+		idToPos[int(ub.ID.Int)] = i
+	}
+
+	sortedResult := make([]*Location, len(ids))
+	sortedErrs := make([]error, len(ids))
+
+	for i, id := range ids {
+		pos := idToPos[id]
+		sortedResult[i] = result[pos]
+		sortedErrs[i] = errs[pos]
+	}
+
+	return sortedResult, sortedErrs
 }
 
 func Create(ctx context.Context, name string, parentName string, addressLine string) (*Location, error) {

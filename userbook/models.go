@@ -137,20 +137,35 @@ func IsOwner(ctx context.Context, userID int, id int) (bool, error) {
 	return ubUserID == userID, nil
 }
 
-func FindManyByIDs(ctx context.Context, ids []int) ([]*UserBook, []error) {
+func LoadManyByIDs(ctx context.Context, ids []int) ([]*UserBook, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
 	}
 	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user_book WHERE id IN ("+db.ParamRefsStr(len(ids))+")", args...)
-
 	if err != nil {
 		panic(err)
 	}
-
 	defer rows.Close()
 
-	return scanRows(&rows)
+	result, errs := scanRows(&rows)
+
+	idToPos := make(map[int]int)
+
+	for i, ub := range result {
+		idToPos[int(ub.ID.Int)] = i
+	}
+
+	sortedResult := make([]*UserBook, len(ids))
+	sortedErrs := make([]error, len(ids))
+
+	for i, id := range ids {
+		pos := idToPos[id]
+		sortedResult[i] = result[pos]
+		sortedErrs[i] = errs[pos]
+	}
+
+	return sortedResult, sortedErrs
 }
 
 func FindManyByUserID(ctx context.Context, userID int) ([]*UserBook, []error) {

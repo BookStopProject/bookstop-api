@@ -30,14 +30,14 @@ func Middleware(next http.Handler) http.Handler {
 			UserByID: *user.NewUserLoader(user.UserLoaderConfig{
 				Wait: Wait,
 				Fetch: func(keys []int) ([]*user.User, []error) {
-					return user.FindManyByIDs(origCtx, keys)
+					return user.LoadManyByIDs(origCtx, keys)
 				},
 			}),
 			BookByID: *book.NewBookLoader(
 				book.BookLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []string) ([]*book.Book, []error) {
-						return book.FindManyByIDs(origCtx, keys)
+						return book.LoadManyByIDs(origCtx, keys)
 					},
 				},
 			),
@@ -45,7 +45,7 @@ func Middleware(next http.Handler) http.Handler {
 				location.LocationLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*location.Location, []error) {
-						return location.FindManyByIDs(origCtx, keys)
+						return location.LoadManyByIDs(origCtx, keys)
 					},
 				},
 			),
@@ -53,7 +53,7 @@ func Middleware(next http.Handler) http.Handler {
 				userbook.UserBookLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*userbook.UserBook, []error) {
-						return userbook.FindManyByIDs(origCtx, keys)
+						return userbook.LoadManyByIDs(origCtx, keys)
 					},
 				},
 			),
@@ -61,7 +61,7 @@ func Middleware(next http.Handler) http.Handler {
 				inventory.InventoryLoaderConfig{
 					Wait: Wait,
 					Fetch: func(keys []int) ([]*inventory.Inventory, []error) {
-						return inventory.FindManyByIDs(origCtx, keys)
+						return inventory.LoadManyByIDs(origCtx, keys)
 					},
 				},
 			),

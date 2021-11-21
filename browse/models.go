@@ -104,7 +104,7 @@ func FindBooksByBrowseID(ctx context.Context, id int) (results []*book.Book, err
 		bookIDs = append(bookIDs, bookID)
 	}
 
-	results, errs = book.FindManyByIDs(ctx, bookIDs)
+	results, errs = book.LoadManyByIDs(ctx, bookIDs)
 	return
 }
 
@@ -139,7 +139,7 @@ func AddBooksByIDs(ctx context.Context, id int, bookIDs []string) (bool, error) 
 
 	query := "INSERT INTO public.browse_book(book_id, browse_id) VALUES"
 
-	_, errs := book.FindManyByIDs(ctx, bookIDs)
+	_, errs := book.LoadManyByIDs(ctx, bookIDs)
 	for i, bookID := range bookIDs {
 		if errs[i] != nil {
 			return false, errors.New("book " + bookIDs[i] + ": " + errs[i].Error())

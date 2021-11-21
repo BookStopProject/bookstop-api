@@ -113,7 +113,7 @@ func FindByID(ctx context.Context, id string) (*Book, error) {
 	return book, nil
 }
 
-func FindManyByIDs(ctx context.Context, ids []string) ([]*Book, []error) {
+func LoadManyByIDs(ctx context.Context, ids []string) ([]*Book, []error) {
 	if len(ids) <= 0 {
 		return []*Book{}, []error{}
 	}

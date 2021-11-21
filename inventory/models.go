@@ -67,7 +67,7 @@ func scanRow(row *pgx.Row) (*Inventory, error) {
 const availableOnlyAnd = ` AND NOT EXISTS (SELECT FROM public.inventory_claim WHERE inventory_id = public.inventory.id) 
 AND removed_at IS NULL`
 
-func FindManyByIDs(ctx context.Context, ids []int) ([]*Inventory, []error) {
+func LoadManyByIDs(ctx context.Context, ids []int) ([]*Inventory, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -80,7 +80,24 @@ func FindManyByIDs(ctx context.Context, ids []int) ([]*Inventory, []error) {
 
 	defer rows.Close()
 
-	return scanRows(&rows)
+	result, errs := scanRows(&rows)
+
+	idToPos := make(map[int]int)
+
+	for i, ub := range result {
+		idToPos[int(ub.ID.Int)] = i
+	}
+
+	sortedResult := make([]*Inventory, len(ids))
+	sortedErrs := make([]error, len(ids))
+
+	for i, id := range ids {
+		pos := idToPos[id]
+		sortedResult[i] = result[pos]
+		sortedErrs[i] = errs[pos]
+	}
+
+	return sortedResult, sortedErrs
 }
 
 func FindManyByBookID(ctx context.Context, bookID string, availableOnly bool) ([]*Inventory, error) {

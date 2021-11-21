@@ -118,7 +118,7 @@ func FindAll(ctx context.Context) ([]*User, []error) {
 	return scanRows(&rows)
 }
 
-func FindManyByIDs(ctx context.Context, ids []int) ([]*User, []error) {
+func LoadManyByIDs(ctx context.Context, ids []int) ([]*User, []error) {
 	args := make([]interface{}, len(ids))
 	for i, v := range ids {
 		args[i] = v
@@ -131,7 +131,24 @@ func FindManyByIDs(ctx context.Context, ids []int) ([]*User, []error) {
 
 	defer rows.Close()
 
-	return scanRows(&rows)
+	result, errs := scanRows(&rows)
+
+	idToPos := make(map[int]int)
+
+	for i, ub := range result {
+		idToPos[int(ub.ID.Int)] = i
+	}
+
+	sortedResult := make([]*User, len(ids))
+	sortedErrs := make([]error, len(ids))
+
+	for i, id := range ids {
+		pos := idToPos[id]
+		sortedResult[i] = result[pos]
+		sortedErrs[i] = errs[pos]
+	}
+
+	return sortedResult, sortedErrs
 }
 
 func UpdateByID(ctx context.Context, id int, name *string, description *string) (*User, error) {
