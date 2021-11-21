@@ -19,6 +19,8 @@ import (
 
 const defaultPort = "8080"
 
+const gqlEndpoint = "/graphql"
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -31,7 +33,7 @@ func main() {
 
 	router := httprouter.New()
 
-	router.Handler(http.MethodGet, "/playground", playground.Handler("GraphQL playground", "/graphql"))
+	router.Handler(http.MethodGet, "/playground", playground.Handler("GraphQL playground", gqlEndpoint))
 
 	cor := cors.New(cors.Options{
 		AllowOriginFunc: func(_ string) bool {
@@ -42,9 +44,9 @@ func main() {
 	})
 
 	apiGraphQL := cor.Handler(loader.Middleware(auth.Middleware(srv)))
-	router.Handler(http.MethodGet, "/graphql", apiGraphQL)
-	router.Handler(http.MethodPost, "/graphql", apiGraphQL)
-	router.Handler(http.MethodOptions, "/graphql", apiGraphQL)
+	router.Handler(http.MethodGet, gqlEndpoint, apiGraphQL)
+	router.Handler(http.MethodPost, gqlEndpoint, apiGraphQL)
+	router.Handler(http.MethodOptions, gqlEndpoint, apiGraphQL)
 
 	auth.Router(router)
 	admin.Router(router)

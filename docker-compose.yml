@@ -19,7 +19,7 @@ services:
       - "/app/letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
   app:
-    image: registry.digitalocean.com/bookstop/bookstop:latest
+    build: .
     container_name: "app"
     depends_on:
       - postgres
