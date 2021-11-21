@@ -16,10 +16,11 @@
     id="description"
     name="description"
     minlength="1"
-    maxlength="160"
+    maxlength="300"
     rows="2"
-    value="{{ .Browse.Description }}"
-  ></textarea>
+  >
+{{ .Browse.Description }}</textarea
+  >
   <label for="started-at">Started at</label>
   <input required id="new-started-at" name="started_at" type="datetime-local"
   value="{{ .Browse.StartedAt.Format "2006-01-02T15:04:05" }}" />

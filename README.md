@@ -55,7 +55,6 @@ export $(grep -v '^#' .env | xargs)
 ### Start docker compose
 
 ```bash
-docker compose pull
 docker compose down
-docker compose up -d
+docker compose up --build -d
 ```
