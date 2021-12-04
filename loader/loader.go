@@ -2,6 +2,7 @@ package loader
 
 import (
 	"bookstop/book"
+	"bookstop/graph/model"
 	"bookstop/inventory"
 	"bookstop/location"
 	"bookstop/user"
@@ -29,7 +30,7 @@ func Middleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(origCtx, loadersKey, &Loaders{
 			UserByID: *user.NewUserLoader(user.UserLoaderConfig{
 				Wait: Wait,
-				Fetch: func(keys []int) ([]*user.User, []error) {
+				Fetch: func(keys []int) ([]*model.User, []error) {
 					return user.LoadManyByIDs(origCtx, keys)
 				},
 			}),
@@ -44,7 +45,7 @@ func Middleware(next http.Handler) http.Handler {
 			LocationByID: *location.NewLocationLoader(
 				location.LocationLoaderConfig{
 					Wait: Wait,
-					Fetch: func(keys []int) ([]*location.Location, []error) {
+					Fetch: func(keys []int) ([]*model.Location, []error) {
 						return location.LoadManyByIDs(origCtx, keys)
 					},
 				},
@@ -52,7 +53,7 @@ func Middleware(next http.Handler) http.Handler {
 			UserBookByID: *userbook.NewUserBookLoader(
 				userbook.UserBookLoaderConfig{
 					Wait: Wait,
-					Fetch: func(keys []int) ([]*userbook.UserBook, []error) {
+					Fetch: func(keys []int) ([]*model.UserBook, []error) {
 						return userbook.LoadManyByIDs(origCtx, keys)
 					},
 				},
@@ -60,7 +61,7 @@ func Middleware(next http.Handler) http.Handler {
 			InventoryByID: *inventory.NewInventoryLoader(
 				inventory.InventoryLoaderConfig{
 					Wait: Wait,
-					Fetch: func(keys []int) ([]*inventory.Inventory, []error) {
+					Fetch: func(keys []int) ([]*model.Inventory, []error) {
 						return inventory.LoadManyByIDs(origCtx, keys)
 					},
 				},

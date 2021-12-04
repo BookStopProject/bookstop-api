@@ -43,10 +43,7 @@ func ForContext(ctx context.Context) (*user.User, error) {
 		return nil, err
 	}
 
-	userIDInt, err := strconv.Atoi(userID)
-	if err != nil {
-		return nil, err
-	}
+	userIDInt, _ := strconv.Atoi(userID)
 
 	return user.FindByID(ctx, userIDInt)
 }

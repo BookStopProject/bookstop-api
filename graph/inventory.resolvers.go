@@ -9,8 +9,6 @@ import (
 	"bookstop/graph/model"
 	"bookstop/inventory"
 	"bookstop/loader"
-	"bookstop/location"
-	"bookstop/userbook"
 	"context"
 	"errors"
 	"strconv"
@@ -18,36 +16,21 @@ import (
 
 func (r *inventoryResolver) UserBook(ctx context.Context, obj *model.Inventory) (*model.UserBook, error) {
 	intID, _ := strconv.Atoi(obj.UserBookID)
-	ub, err := loader.For(ctx).UserBookByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return userbook.ToGraph(ub), nil
+	return loader.For(ctx).UserBookByID.Load(intID)
 }
 
 func (r *inventoryResolver) Location(ctx context.Context, obj *model.Inventory) (*model.Location, error) {
 	intID, _ := strconv.Atoi(obj.LocationID)
-	loc, err := loader.For(ctx).LocationByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return location.ToGraph(loc), nil
+	return loader.For(ctx).LocationByID.Load(intID)
 }
 
 func (r *inventoryClaimResolver) Inventory(ctx context.Context, obj *model.InventoryClaim) (*model.Inventory, error) {
 	intID, _ := strconv.Atoi(obj.InventoryID)
-	inv, err := loader.For(ctx).InventoryByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return inventory.ToGraph(inv), nil
+	return loader.For(ctx).InventoryByID.Load(intID)
 }
 
 func (r *mutationResolver) InventoryClaimDo(ctx context.Context, id string) (*model.InventoryClaim, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+	intID, _ := strconv.Atoi(id)
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, err
@@ -68,10 +51,7 @@ func (r *queryResolver) Inventories(ctx context.Context, bookID *string, locatio
 	if bookID != nil {
 		invs, err = inventory.FindManyByBookID(ctx, *bookID, true)
 	} else if locationID != nil {
-		intID, intErr := strconv.Atoi(*locationID)
-		if intErr != nil {
-			return nil, err
-		}
+		intID, _ := strconv.Atoi(*locationID)
 		invs, err = inventory.FindManyByLocationID(ctx, intID, true)
 	} else {
 		return nil, errors.New("must provide either bookID or locationID")
@@ -106,10 +86,7 @@ func (r *queryResolver) InventoryClaimsMine(ctx context.Context) ([]*model.Inven
 }
 
 func (r *queryResolver) InventoryClaimToken(ctx context.Context, id string) (string, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return "", err
-	}
+	intID, _ := strconv.Atoi(id)
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return "", err

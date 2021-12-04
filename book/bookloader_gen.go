@@ -5,12 +5,14 @@ package book
 import (
 	"sync"
 	"time"
+
+	"bookstop/graph/model"
 )
 
 // BookLoaderConfig captures the config to create a new BookLoader
 type BookLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []string) ([]*Book, []error)
+	Fetch func(keys []string) ([]*model.Book, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -31,7 +33,7 @@ func NewBookLoader(config BookLoaderConfig) *BookLoader {
 // BookLoader batches and caches requests
 type BookLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []string) ([]*Book, []error)
+	fetch func(keys []string) ([]*model.Book, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -42,7 +44,7 @@ type BookLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[string]*Book
+	cache map[string]*model.Book
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -54,25 +56,25 @@ type BookLoader struct {
 
 type bookLoaderBatch struct {
 	keys    []string
-	data    []*Book
+	data    []*model.Book
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Book by key, batching and caching will be applied automatically
-func (l *BookLoader) Load(key string) (*Book, error) {
+func (l *BookLoader) Load(key string) (*model.Book, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Book.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *BookLoader) LoadThunk(key string) func() (*Book, error) {
+func (l *BookLoader) LoadThunk(key string) func() (*model.Book, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*Book, error) {
+		return func() (*model.Book, error) {
 			return it, nil
 		}
 	}
@@ -83,10 +85,10 @@ func (l *BookLoader) LoadThunk(key string) func() (*Book, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*Book, error) {
+	return func() (*model.Book, error) {
 		<-batch.done
 
-		var data *Book
+		var data *model.Book
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -111,14 +113,14 @@ func (l *BookLoader) LoadThunk(key string) func() (*Book, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *BookLoader) LoadAll(keys []string) ([]*Book, []error) {
-	results := make([]func() (*Book, error), len(keys))
+func (l *BookLoader) LoadAll(keys []string) ([]*model.Book, []error) {
+	results := make([]func() (*model.Book, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	books := make([]*Book, len(keys))
+	books := make([]*model.Book, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		books[i], errors[i] = thunk()
@@ -129,13 +131,13 @@ func (l *BookLoader) LoadAll(keys []string) ([]*Book, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Books.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *BookLoader) LoadAllThunk(keys []string) func() ([]*Book, []error) {
-	results := make([]func() (*Book, error), len(keys))
+func (l *BookLoader) LoadAllThunk(keys []string) func() ([]*model.Book, []error) {
+	results := make([]func() (*model.Book, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*Book, []error) {
-		books := make([]*Book, len(keys))
+	return func() ([]*model.Book, []error) {
+		books := make([]*model.Book, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			books[i], errors[i] = thunk()
@@ -147,7 +149,7 @@ func (l *BookLoader) LoadAllThunk(keys []string) func() ([]*Book, []error) {
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *BookLoader) Prime(key string, value *Book) bool {
+func (l *BookLoader) Prime(key string, value *model.Book) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -167,9 +169,9 @@ func (l *BookLoader) Clear(key string) {
 	l.mu.Unlock()
 }
 
-func (l *BookLoader) unsafeSet(key string, value *Book) {
+func (l *BookLoader) unsafeSet(key string, value *model.Book) {
 	if l.cache == nil {
-		l.cache = map[string]*Book{}
+		l.cache = map[string]*model.Book{}
 	}
 	l.cache[key] = value
 }

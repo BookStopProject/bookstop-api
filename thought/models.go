@@ -18,11 +18,11 @@ type Thought struct {
 	BookID    pgtype.Varchar
 }
 
-const allSelects = "id, user_id, created_at, text, book_id"
+const queryFieldsAll = "id, user_id, created_at, text, book_id"
 
-func scanRow(row *pgx.Row) (*Thought, error) {
+func scanRow(row pgx.Row) (*Thought, error) {
 	t := &Thought{}
-	err := (*row).Scan(
+	err := row.Scan(
 		&t.ID,
 		&t.UserID,
 		&t.CreatedAt,
@@ -35,28 +35,11 @@ func scanRow(row *pgx.Row) (*Thought, error) {
 	return t, nil
 }
 
-func scanRows(rows *pgx.Rows) ([]*Thought, error) {
-	var thoughts []*Thought
-	for (*rows).Next() {
-		t := &Thought{}
-		err := (*rows).Scan(
-			&t.ID,
-			&t.UserID,
-			&t.CreatedAt,
-			&t.Text,
-			&t.BookID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		thoughts = append(thoughts, t)
-	}
-	return thoughts, nil
-}
-
 func IsOwner(ctx context.Context, userID int, id int) (bool, error) {
 	var ubUserID int
-	err := db.Conn.QueryRow(ctx, "SELECT user_id FROM public.thought WHERE id = $1", id).Scan(&ubUserID)
+	err := db.Conn.QueryRow(ctx, `SELECT user_id
+	FROM public.thought
+	WHERE id = $1`, id).Scan(&ubUserID)
 	if err != nil {
 		return false, err
 	}
@@ -70,8 +53,11 @@ func Create(ctx context.Context, userID int, text string, bookID *string) (*Thou
 			return nil, errors.New("cannot find book")
 		}
 	}
-	row := db.Conn.QueryRow(ctx, "INSERT INTO public.thought(user_id, text, book_id) VALUES ($1, $2, $3) RETURNING "+allSelects, userID, text, bookID)
-	return scanRow(&row)
+	row := db.Conn.QueryRow(ctx, `INSERT INTO public.thought(
+		user_id, text, book_id)
+		VALUES ($1, $2, $3)
+		RETURNING `+queryFieldsAll, userID, text, bookID)
+	return scanRow(row)
 }
 
 func FindAll(ctx context.Context, limit int, before *int) ([]*Thought, error) {
@@ -79,12 +65,22 @@ func FindAll(ctx context.Context, limit int, before *int) ([]*Thought, error) {
 		bf := 999999
 		before = &bf
 	}
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.thought WHERE id < $1 ORDER BY id DESC LIMIT $2", before, limit)
+	rows, err := db.Conn.Query(ctx, "SELECT "+queryFieldsAll+" FROM public.thought WHERE id < $1 ORDER BY id DESC LIMIT $2", before, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	return scanRows(&rows)
+
+	var thoughts []*Thought
+	for rows.Next() {
+		t, err := scanRow(rows.(pgx.Row))
+		if err != nil {
+			return nil, err
+		}
+		thoughts = append(thoughts, t)
+	}
+
+	return thoughts, nil
 }
 
 func FindManyByUserID(ctx context.Context, userID int, limit int, before *int) ([]*Thought, error) {
@@ -92,12 +88,22 @@ func FindManyByUserID(ctx context.Context, userID int, limit int, before *int) (
 		bf := 999999
 		before = &bf
 	}
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.thought WHERE user_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3", userID, before, limit)
+	rows, err := db.Conn.Query(ctx, "SELECT "+queryFieldsAll+" FROM public.thought WHERE user_id = $1 AND id < $2 ORDER BY id DESC LIMIT $3", userID, before, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	return scanRows(&rows)
+
+	var thoughts []*Thought
+	for rows.Next() {
+		t, err := scanRow(rows.(pgx.Row))
+		if err != nil {
+			return nil, err
+		}
+		thoughts = append(thoughts, t)
+	}
+
+	return thoughts, nil
 }
 
 func DeleteByID(ctx context.Context, id int) (bool, error) {

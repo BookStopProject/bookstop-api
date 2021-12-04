@@ -40,18 +40,12 @@ func (r *queryResolver) Browses(ctx context.Context) ([]*model.Browse, error) {
 }
 
 func (r *queryResolver) Browse(ctx context.Context, id string) (*model.Browse, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+	intID, _ := strconv.Atoi(id)
 	return browse.FindByID(ctx, intID)
 }
 
 func (r *queryResolver) BrowseBooks(ctx context.Context, id string) ([]*model.Book, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+	intID, _ := strconv.Atoi(id)
 	books, _ := browse.FindBooksByBrowseID(ctx, intID)
 
 	results := []*model.Book{}

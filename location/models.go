@@ -16,27 +16,24 @@ type Location struct {
 	AddressLine pgtype.Varchar
 }
 
-const allSelects = "id, name, parent_name, address_line"
+const queryFieldsAll = "id, name, parent_name, address_line"
 
-func scanRows(rows *pgx.Rows) (locs []*Location, errs []error) {
-	for (*rows).Next() {
-		loc := &Location{}
-		err := (*rows).Scan(
-			&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine,
-		)
-		if err != nil {
-			errs = append(errs, err)
-			locs = append(locs, nil)
-		} else {
-			errs = append(errs, nil)
-			locs = append(locs, loc)
-		}
+func scanRowAll(row pgx.Row) (locs *Location, errs error) {
+	loc := &Location{}
+	err := (row).Scan(
+		&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine,
+	)
+
+	if err != nil {
+		return nil, err
 	}
-	return
+
+	return loc, nil
 }
 
 func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.location")
+	rows, err := db.Conn.Query(ctx, `SELECT `+queryFieldsAll+`
+	FROM public.location`)
 
 	if err != nil {
 		return nil, err
@@ -47,9 +44,7 @@ func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
 	var results []*model.Location
 
 	for rows.Next() {
-		loc := &Location{}
-		err = rows.Scan(
-			&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine)
+		loc, err := scanRowAll(rows.(pgx.Row))
 
 		if err != nil {
 			return nil, err
@@ -61,43 +56,14 @@ func FindAllLocations(ctx context.Context) ([]*model.Location, error) {
 	return results, nil
 }
 
-func LoadManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
-	args := make([]interface{}, len(ids))
-	for i, v := range ids {
-		args[i] = v
-	}
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.location WHERE id IN ("+db.ParamRefsStr(len(ids))+")", args...)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	result, errs := scanRows(&rows)
-
-	idToPos := make(map[int]int)
-
-	for i, ub := range result {
-		idToPos[int(ub.ID.Int)] = i
-	}
-
-	sortedResult := make([]*Location, len(ids))
-	sortedErrs := make([]error, len(ids))
-
-	for i, id := range ids {
-		pos, ok := idToPos[id]
-		if ok {
-			sortedResult[i] = result[pos]
-			sortedErrs[i] = errs[pos]
-		}
-	}
-
-	return sortedResult, sortedErrs
-}
-
 func Create(ctx context.Context, name string, parentName string, addressLine string) (*Location, error) {
-	loc := &Location{}
-	err := db.Conn.QueryRow(ctx, `INSERT INTO public.location(name, parent_name, address_line) VALUES ($1, $2, $3) RETURNING `+allSelects, name, parentName, addressLine).Scan(
-		&loc.ID, &loc.Name, &loc.ParentName, &loc.AddressLine,
-	)
+	row := db.Conn.QueryRow(ctx, `INSERT INTO public.location(
+	name, parent_name, address_line)
+	VALUES ($1, $2, $3)
+	RETURNING `+queryFieldsAll, name, parentName, addressLine)
+
+	loc, err := scanRowAll(row)
+
 	if err != nil {
 		return nil, err
 	}

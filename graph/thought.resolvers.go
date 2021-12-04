@@ -9,7 +9,6 @@ import (
 	"bookstop/graph/model"
 	"bookstop/loader"
 	"bookstop/thought"
-	"bookstop/user"
 	"context"
 	"strconv"
 )
@@ -30,10 +29,7 @@ func (r *mutationResolver) ThoughtCreate(ctx context.Context, text string, bookI
 }
 
 func (r *mutationResolver) ThoughtDelete(ctx context.Context, id string) (bool, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return false, err
-	}
+	intID, _ := strconv.Atoi(id)
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return false, err
@@ -78,11 +74,7 @@ func (r *queryResolver) Thoughts(ctx context.Context, userID *string, limit int,
 
 func (r *thoughtResolver) User(ctx context.Context, obj *model.Thought) (*model.User, error) {
 	intID, _ := strconv.Atoi(obj.UserID)
-	usr, err := loader.For(ctx).UserByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return user.ToGraph(usr), nil
+	return loader.For(ctx).UserByID.Load(intID)
 }
 
 func (r *thoughtResolver) Book(ctx context.Context, obj *model.Thought) (*model.Book, error) {

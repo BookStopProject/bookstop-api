@@ -41,13 +41,6 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 }
 
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
-	usr, err := loader.For(ctx).UserByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return user.ToGraph(usr), nil
+	intID, _ := strconv.Atoi(id)
+	return loader.For(ctx).UserByID.Load(intID)
 }

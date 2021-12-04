@@ -8,34 +8,22 @@ import (
 	"bookstop/graph/generated"
 	"bookstop/graph/model"
 	"bookstop/loader"
-	"bookstop/userbook"
 	"context"
 	"strconv"
 )
 
 func (r *exchangeResolver) UserBookOld(ctx context.Context, obj *model.Exchange) (*model.UserBook, error) {
 	intID, _ := strconv.Atoi(obj.UserBookIDOld)
-	ub, err := loader.For(ctx).UserBookByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return userbook.ToGraph(ub), nil
+	return loader.For(ctx).UserBookByID.Load(intID)
 }
 
 func (r *exchangeResolver) UserBookNew(ctx context.Context, obj *model.Exchange) (*model.UserBook, error) {
 	intID, _ := strconv.Atoi(obj.UserBookIDNew)
-	ub, err := loader.For(ctx).UserBookByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return userbook.ToGraph(ub), nil
+	return loader.For(ctx).UserBookByID.Load(intID)
 }
 
 func (r *queryResolver) Exchanges(ctx context.Context, userBookID string) ([]*model.Exchange, error) {
-	intID, err := strconv.Atoi(userBookID)
-	if err != nil {
-		return nil, err
-	}
+	intID, _ := strconv.Atoi(userBookID)
 	return exchange.FindByUserBookID(ctx, intID)
 }
 

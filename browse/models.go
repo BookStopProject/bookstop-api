@@ -13,14 +13,14 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-const allSelects = "id, name, description, image_url, started_at, ended_at"
-
 type Browse = model.Browse
 
-func scanRow(row *pgx.Row) (*Browse, error) {
+const queryFieldsAll = "id, name, description, image_url, started_at, ended_at"
+
+func scanRowAll(row pgx.Row) (*Browse, error) {
 	br := &Browse{}
 	var browseID int
-	err := (*row).Scan(
+	err := row.Scan(
 		&browseID,
 		&br.Name,
 		&br.Description,
@@ -36,9 +36,11 @@ func scanRow(row *pgx.Row) (*Browse, error) {
 }
 
 func FindByID(ctx context.Context, id int) (*Browse, error) {
-	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.browse WHERE id = $1", id)
+	row := db.Conn.QueryRow(ctx, `SELECT `+queryFieldsAll+`
+	FROM public.browse
+	WHERE id = $1`, id)
 
-	br, err := scanRow(&row)
+	br, err := scanRowAll(row)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -52,7 +54,7 @@ func FindByID(ctx context.Context, id int) (*Browse, error) {
 
 func FindAll(ctx context.Context, when *time.Time) (results []*Browse, err error) {
 	var rows pgx.Rows
-	query := "SELECT " + allSelects + " FROM public.browse"
+	query := "SELECT " + queryFieldsAll + " FROM public.browse"
 	if when != nil {
 		rows, err = db.Conn.Query(ctx, query+" WHERE $1 between started_at and ended_at", when)
 	} else {
@@ -66,19 +68,9 @@ func FindAll(ctx context.Context, when *time.Time) (results []*Browse, err error
 	defer rows.Close()
 
 	for rows.Next() {
-		br := &Browse{}
-		var browseID int
-		err = rows.Scan(
-			&browseID,
-			&br.Name,
-			&br.Description,
-			&br.ImageURL,
-			&br.StartedAt,
-			&br.EndedAt,
-		)
-		br.ID = strconv.Itoa(browseID)
+		br, err := scanRowAll(rows.(pgx.Row))
 		if err != nil {
-			return
+			return nil, err
 		}
 		results = append(results, br)
 	}
@@ -87,9 +79,9 @@ func FindAll(ctx context.Context, when *time.Time) (results []*Browse, err error
 }
 
 func FindBooksByBrowseID(ctx context.Context, id int) (results []*book.Book, errs []error) {
-	bookIDs := []string{}
-
-	rows, err := db.Conn.Query(ctx, "SELECT book_id FROM public.browse_book where browse_id = $1", id)
+	rows, err := db.Conn.Query(ctx, `SELECT book_id
+	FROM public.browse_book
+	WHERE browse_id = $1`, id)
 
 	if err != nil {
 		errs = append(errs, err)
@@ -97,6 +89,8 @@ func FindBooksByBrowseID(ctx context.Context, id int) (results []*book.Book, err
 	}
 
 	defer rows.Close()
+
+	bookIDs := []string{}
 
 	for rows.Next() {
 		var bookID string
@@ -110,19 +104,24 @@ func FindBooksByBrowseID(ctx context.Context, id int) (results []*book.Book, err
 
 func Create(ctx context.Context, name string, description string, startedAt string, endedAt string) (*Browse, error) {
 	row := db.Conn.QueryRow(ctx, `INSERT INTO public.browse(
-		name, description, started_at, ended_at)
-		VALUES ($1, $2, $3, $4) RETURNING `+allSelects, name, description, startedAt, endedAt)
-	return scanRow(&row)
+	name, description, started_at, ended_at)
+	VALUES ($1, $2, $3, $4)
+	RETURNING `+queryFieldsAll, name, description, startedAt, endedAt)
+	return scanRowAll(row)
 }
 
 func UpdateByID(ctx context.Context, id int, name string, description string, startedAt string, endedAt string) (*Browse, error) {
-	row := db.Conn.QueryRow(ctx, "UPDATE public.browse SET name = $2, description = $3, started_at = $4, ended_at = $5 WHERE id = $1 RETURNING "+allSelects, id, name, description, startedAt, endedAt)
+	row := db.Conn.QueryRow(ctx, `UPDATE public.browse
+	SET name = $2, description = $3, started_at = $4, ended_at = $5
+	WHERE id = $1
+	RETURNING `+queryFieldsAll, id, name, description, startedAt, endedAt)
 
-	return scanRow(&row)
+	return scanRowAll(row)
 }
 
 func DeleteByID(ctx context.Context, id int) (bool, error) {
-	_, err := db.Conn.Query(ctx, "DELETE FROM public.browse WHERE id = $1", id)
+	_, err := db.Conn.Query(ctx, `DELETE FROM public.browse
+	WHERE id= $1`, id)
 	if err != nil {
 		return false, err
 	}
@@ -183,7 +182,10 @@ func DeleteBooksByIDs(ctx context.Context, id int, bookIDs []string) (bool, erro
 
 	args[len(args)-1] = id
 
-	query := "DELETE FROM public.browse_book WHERE book_id IN (" + db.ParamRefsStr(len(bookIDs)) + ") AND browse_id = $" + strconv.Itoa(len(bookIDs)+1)
+	query := `DELETE FROM public.browse_book
+	WHERE book_id IN (` + db.ParamRefsStr(len(bookIDs)) + `)
+	AND browse_id = $` + strconv.Itoa(len(bookIDs)+1)
+
 	rows, err := db.Conn.Query(ctx, query, args...)
 
 	if err != nil {

@@ -8,14 +8,10 @@ import (
 	"bookstop/graph/generated"
 	"bookstop/graph/model"
 	"bookstop/loader"
-	"bookstop/user"
 	"bookstop/userbook"
 	"context"
 	"errors"
 	"strconv"
-
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 func (r *mutationResolver) UserBookAdd(ctx context.Context, bookID string, startedAt *string, endedAt *string) (*model.UserBook, error) {
@@ -34,10 +30,7 @@ func (r *mutationResolver) UserBookAdd(ctx context.Context, bookID string, start
 }
 
 func (r *mutationResolver) UserBookEdit(ctx context.Context, id string, startedAt *string, endedAt *string) (*model.UserBook, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
+	intID, _ := strconv.Atoi(id)
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, err
@@ -60,10 +53,7 @@ func (r *mutationResolver) UserBookEdit(ctx context.Context, id string, startedA
 }
 
 func (r *mutationResolver) UserBookDelete(ctx context.Context, id string) (bool, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return false, err
-	}
+	intID, _ := strconv.Atoi(id)
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return false, err
@@ -82,27 +72,16 @@ func (r *mutationResolver) UserBookDelete(ctx context.Context, id string) (bool,
 }
 
 func (r *queryResolver) UserBook(ctx context.Context, id string) (*model.UserBook, error) {
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, err
-	}
-	userBook, err := loader.For(ctx).UserBookByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return userbook.ToGraph(userBook), nil
+	intID, _ := strconv.Atoi(id)
+	return loader.For(ctx).UserBookByID.Load(intID)
 }
 
 func (r *queryResolver) UserBooks(ctx context.Context, userID *string, mine *bool) ([]*model.UserBook, error) {
-	var results []*model.UserBook
 	var userBooks []*userbook.UserBook
-	var errs []error
+	var err error
 	if userID != nil {
-		intUserID, err := strconv.Atoi(*userID)
-		if err != nil {
-			return nil, err
-		}
-		userBooks, errs = userbook.FindManyByUserID(ctx, intUserID)
+		intUserID, _ := strconv.Atoi(*userID)
+		userBooks, err = userbook.FindManyByUserID(ctx, intUserID)
 	} else if *mine {
 		usr, err := auth.ForContext(ctx)
 		if err != nil {
@@ -111,15 +90,16 @@ func (r *queryResolver) UserBooks(ctx context.Context, userID *string, mine *boo
 		if usr == nil {
 			return nil, auth.ErrUnauthorized
 		}
-		userBooks, errs = userbook.FindManyByUserID(ctx, int(usr.ID.Int))
+		userBooks, err = userbook.FindManyByUserID(ctx, int(usr.ID.Int))
 	} else {
 		return nil, errors.New("must provide either userID or mine = true")
 	}
+	if err != nil {
+		return nil, err
+	}
+	results := make([]*model.UserBook, len(userBooks))
 	for i, ub := range userBooks {
-		if errs[i] != nil {
-			graphql.AddError(ctx, gqlerror.Errorf("userbook "+strconv.Itoa(i)+": "+errs[i].Error()))
-		}
-		results = append(results, userbook.ToGraph(ub))
+		results[i] = userbook.ToGraph(ub)
 	}
 	return results, nil
 }
@@ -130,11 +110,7 @@ func (r *userBookResolver) Book(ctx context.Context, obj *model.UserBook) (*mode
 
 func (r *userBookResolver) User(ctx context.Context, obj *model.UserBook) (*model.User, error) {
 	intID, _ := strconv.Atoi(obj.UserID)
-	usr, err := loader.For(ctx).UserByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return user.ToGraph(usr), nil
+	return loader.For(ctx).UserByID.Load(intID)
 }
 
 // UserBook returns generated.UserBookResolver implementation.

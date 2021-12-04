@@ -32,7 +32,7 @@ var searchApiUsedFields = []googleapi.Field{"items/" + apiUsedFields[0], "items/
 const redisBookPrefix = "book:"
 const redisCacheExpiration = 14 * 24 * time.Hour // 14 days
 
-func setCache(ctx context.Context, books []*Book) error {
+func setCache(ctx context.Context, books []*model.Book) error {
 	_, err := db.RDB.Pipelined(ctx, func(pipe redis.Pipeliner) error {
 		for _, book := range books {
 			if book != nil {
@@ -47,7 +47,7 @@ func setCache(ctx context.Context, books []*Book) error {
 	return err
 }
 
-func getCache(ctx context.Context, ids []string) ([]*Book, error) {
+func getCache(ctx context.Context, ids []string) ([]*model.Book, error) {
 	keys := make([]string, len(ids))
 	for idx, id := range ids {
 		keys[idx] = redisBookPrefix + id
@@ -57,11 +57,11 @@ func getCache(ctx context.Context, ids []string) ([]*Book, error) {
 		return nil, err
 	}
 
-	results := make([]*Book, len(ids))
+	results := make([]*model.Book, len(ids))
 
 	for idx, strBook := range strBooks {
 		if strBook != nil {
-			var book *Book = &Book{}
+			var book *model.Book = &model.Book{}
 			err := json.Unmarshal([]byte(strBook.(string)), book)
 			if err == nil {
 				results[idx] = book
@@ -72,7 +72,7 @@ func getCache(ctx context.Context, ids []string) ([]*Book, error) {
 	return results, nil
 }
 
-func findByIDViaAPI(ctx context.Context, id string) (*Book, error) {
+func findByIDViaAPI(ctx context.Context, id string) (*model.Book, error) {
 	srv, err := NewBookService(ctx)
 
 	if err != nil {
@@ -93,7 +93,7 @@ func findByIDViaAPI(ctx context.Context, id string) (*Book, error) {
 	return ToGraph(toMd(volume)), nil
 }
 
-func FindByID(ctx context.Context, id string) (*Book, error) {
+func FindByID(ctx context.Context, id string) (*model.Book, error) {
 	cached, err := getCache(ctx, []string{id})
 	if err != nil {
 		return nil, err
@@ -108,46 +108,12 @@ func FindByID(ctx context.Context, id string) (*Book, error) {
 		return nil, err
 	}
 
-	setCache(ctx, []*Book{book})
+	setCache(ctx, []*model.Book{book})
 
 	return book, nil
 }
 
-func LoadManyByIDs(ctx context.Context, ids []string) ([]*Book, []error) {
-	if len(ids) <= 0 {
-		return []*Book{}, []error{}
-	}
-
-	result, err := getCache(ctx, ids)
-	if err != nil {
-		panic(err)
-	}
-
-	errors := make([]error, len(ids))
-
-	var cachableBooks []*Book
-
-	for idx, cachedBook := range result {
-		if cachedBook == nil {
-			loadedBook, err := findByIDViaAPI(ctx, ids[idx])
-
-			if err != nil {
-				errors[idx] = err
-			} else if loadedBook != nil {
-				cachableBooks = append(cachableBooks, loadedBook)
-				result[idx] = loadedBook
-			}
-		}
-	}
-
-	if len(cachableBooks) > 0 {
-		setCache(ctx, cachableBooks)
-	}
-
-	return result, errors
-}
-
-func Search(ctx context.Context, query string, limit int, startIndex int) (books []*Book, err error) {
+func Search(ctx context.Context, query string, limit int, startIndex int) (books []*model.Book, err error) {
 	srv, err := NewBookService(ctx)
 	if err != nil {
 		return nil, err

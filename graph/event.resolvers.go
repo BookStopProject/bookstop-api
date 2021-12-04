@@ -8,18 +8,13 @@ import (
 	"bookstop/graph/generated"
 	"bookstop/graph/model"
 	"bookstop/loader"
-	"bookstop/user"
 	"context"
 	"strconv"
 )
 
 func (r *eventResolver) User(ctx context.Context, obj *model.Event) (*model.User, error) {
 	intID, _ := strconv.Atoi(obj.UserID)
-	usr, err := loader.For(ctx).UserByID.Load(intID)
-	if err != nil {
-		return nil, err
-	}
-	return user.ToGraph(usr), nil
+	return loader.For(ctx).UserByID.Load(intID)
 }
 
 func (r *queryResolver) Events(ctx context.Context) ([]*model.Event, error) {

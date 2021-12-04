@@ -7,10 +7,13 @@ import (
 	"strconv"
 )
 
-const allSelects = "id, user_book_id_old, user_book_id_new, exchanged_at"
+const queryFieldsAll = "id, user_book_id_old, user_book_id_new, exchanged_at"
 
 func FindByUserBookID(ctx context.Context, ubID int) ([]*model.Exchange, error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.exchange WHERE user_book_id_old = $1 OR user_book_id_new = $1 OR user_book_id_original = $1 ORDER BY id DESC", ubID)
+	rows, err := db.Conn.Query(ctx, `SELECT `+queryFieldsAll+`
+	FROM public.exchange
+	WHERE WHERE user_book_id_old = $1 OR user_book_id_new = $1 OR user_book_id_original = $1
+	ORDER BY id DESC`, ubID)
 
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package book
 
 import (
 	"bookstop/graph/model"
+	"context"
 	"strconv"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
@@ -51,4 +52,38 @@ func ToGraph(volume *books.Volume) *model.Book {
 	}
 
 	return &val
+}
+
+func LoadManyByIDs(ctx context.Context, ids []string) ([]*model.Book, []error) {
+	if len(ids) <= 0 {
+		return []*model.Book{}, []error{}
+	}
+
+	result, err := getCache(ctx, ids)
+	if err != nil {
+		panic(err)
+	}
+
+	errors := make([]error, len(ids))
+
+	var cachableBooks []*model.Book
+
+	for idx, cachedBook := range result {
+		if cachedBook == nil {
+			loadedBook, err := findByIDViaAPI(ctx, ids[idx])
+
+			if err != nil {
+				errors[idx] = err
+			} else if loadedBook != nil {
+				cachableBooks = append(cachableBooks, loadedBook)
+				result[idx] = loadedBook
+			}
+		}
+	}
+
+	if len(cachableBooks) > 0 {
+		setCache(ctx, cachableBooks)
+	}
+
+	return result, errors
 }

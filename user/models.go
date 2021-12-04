@@ -27,11 +27,11 @@ const (
 	maxLengthDescription = 160
 )
 
-const allSelects = "id, name, oauth_id, email, description, profile_image_url, created_at, credit"
+const queryFieldsAll = "id, name, oauth_id, email, description, profile_image_url, created_at, credit"
 
-func scanRow(row *pgx.Row) (*User, error) {
+func scanRowAll(row pgx.Row) (*User, error) {
 	user := &User{}
-	err := (*row).Scan(
+	err := row.Scan(
 		&user.ID,
 		&user.Name,
 		&user.OauthID,
@@ -47,33 +47,36 @@ func scanRow(row *pgx.Row) (*User, error) {
 	return user, nil
 }
 
-func scanRows(rows *pgx.Rows) (users []*User, errs []error) {
-	for (*rows).Next() {
-		user := &User{}
-		err := (*rows).Scan(
-			&user.ID,
-			&user.Name,
-			&user.OauthID,
-			&user.Email,
-			&user.Description,
-			&user.ProfileImageUrl,
-			&user.CreatedAt,
-			&user.Credit,
-		)
-		if err != nil {
-			errs = append(errs, err)
-			users = append(users, nil)
-		} else {
-			errs = append(errs, nil)
-			users = append(users, user)
-		}
-	}
-	return
-}
+// func scanRowAlls(rows pgx.Rows) (users []*User, errs []error) {
+// 	for rows.Next() {
+// 		user := &User{}
+// 		err := rows.Scan(
+// 			&user.ID,
+// 			&user.Name,
+// 			&user.OauthID,
+// 			&user.Email,
+// 			&user.Description,
+// 			&user.ProfileImageUrl,
+// 			&user.CreatedAt,
+// 			&user.Credit,
+// 		)
+// 		if err != nil {
+// 			errs = append(errs, err)
+// 			users = append(users, nil)
+// 		} else {
+// 			errs = append(errs, nil)
+// 			users = append(users, user)
+// 		}
+// 	}
+// 	return
+// }
 
 func Create(ctx context.Context, name string, oauthID string, email *string, picture *string) (*User, error) {
-	row := db.Conn.QueryRow(ctx, "INSERT INTO public.user(name, oauth_id, email, profile_image_url) VALUES ($1, $2, $3, $4) RETURNING "+allSelects, name, oauthID, email, picture)
-	return scanRow(&row)
+	row := db.Conn.QueryRow(ctx, `INSERT INTO public.user(
+	name, oauth_id, email, profile_image_url)
+	VALUES ($1, $2, $3, $4)
+	RETURNING `+queryFieldsAll, name, oauthID, email, picture)
+	return scanRowAll(row)
 }
 
 func FindIDByOauthID(ctx context.Context, oauthID string) (*int, error) {
@@ -94,9 +97,11 @@ func FindIDByOauthID(ctx context.Context, oauthID string) (*int, error) {
 }
 
 func FindByID(ctx context.Context, id int) (*User, error) {
-	row := db.Conn.QueryRow(ctx, "SELECT "+allSelects+" FROM public.user WHERE id = $1", id)
+	row := db.Conn.QueryRow(ctx, `SELECT `+queryFieldsAll+`
+	FROM public.user
+	WHERE id = $1`, id)
 
-	user, err := scanRow(&row)
+	user, err := scanRowAll(row)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -108,49 +113,24 @@ func FindByID(ctx context.Context, id int) (*User, error) {
 	return user, nil
 }
 
-func FindAll(ctx context.Context) ([]*User, []error) {
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user")
+func FindAll(ctx context.Context) ([]*User, error) {
+	rows, err := db.Conn.Query(ctx, `SELECT `+queryFieldsAll+`
+	FROM public.user`)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	return scanRows(&rows)
-}
-
-func LoadManyByIDs(ctx context.Context, ids []int) ([]*User, []error) {
-	args := make([]interface{}, len(ids))
-	for i, v := range ids {
-		args[i] = v
-	}
-	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.user WHERE id IN ("+db.ParamRefsStr(len(ids))+")", args...)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer rows.Close()
-
-	result, errs := scanRows(&rows)
-
-	idToPos := make(map[int]int)
-
-	for i, ub := range result {
-		idToPos[int(ub.ID.Int)] = i
-	}
-
-	sortedResult := make([]*User, len(ids))
-	sortedErrs := make([]error, len(ids))
-
-	for i, id := range ids {
-		pos, ok := idToPos[id]
-		if ok {
-			sortedResult[i] = result[pos]
-			sortedErrs[i] = errs[pos]
+	var us []*User
+	for rows.Next() {
+		u, err := scanRowAll(rows.(pgx.Row))
+		if err != nil {
+			return nil, err
 		}
+		us = append(us, u)
 	}
 
-	return sortedResult, sortedErrs
+	return us, nil
 }
 
 func UpdateByID(ctx context.Context, id int, name *string, description *string) (*User, error) {
@@ -188,7 +168,7 @@ func UpdateByID(ctx context.Context, id int, name *string, description *string) 
 		values = append(values, *description)
 	}
 
-	row := db.Conn.QueryRow(ctx, "UPDATE public.user SET "+strings.Join(fields, ",")+" WHERE id = $1 RETURNING "+allSelects, values...)
+	row := db.Conn.QueryRow(ctx, "UPDATE public.user SET "+strings.Join(fields, ",")+" WHERE id = $1 RETURNING "+queryFieldsAll, values...)
 
-	return scanRow(&row)
+	return scanRowAll(row)
 }

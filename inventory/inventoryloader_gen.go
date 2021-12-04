@@ -5,12 +5,14 @@ package inventory
 import (
 	"sync"
 	"time"
+
+	"bookstop/graph/model"
 )
 
 // InventoryLoaderConfig captures the config to create a new InventoryLoader
 type InventoryLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []int) ([]*Inventory, []error)
+	Fetch func(keys []int) ([]*model.Inventory, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -31,7 +33,7 @@ func NewInventoryLoader(config InventoryLoaderConfig) *InventoryLoader {
 // InventoryLoader batches and caches requests
 type InventoryLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []int) ([]*Inventory, []error)
+	fetch func(keys []int) ([]*model.Inventory, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -42,7 +44,7 @@ type InventoryLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[int]*Inventory
+	cache map[int]*model.Inventory
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -54,25 +56,25 @@ type InventoryLoader struct {
 
 type inventoryLoaderBatch struct {
 	keys    []int
-	data    []*Inventory
+	data    []*model.Inventory
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Inventory by key, batching and caching will be applied automatically
-func (l *InventoryLoader) Load(key int) (*Inventory, error) {
+func (l *InventoryLoader) Load(key int) (*model.Inventory, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Inventory.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *InventoryLoader) LoadThunk(key int) func() (*Inventory, error) {
+func (l *InventoryLoader) LoadThunk(key int) func() (*model.Inventory, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*Inventory, error) {
+		return func() (*model.Inventory, error) {
 			return it, nil
 		}
 	}
@@ -83,10 +85,10 @@ func (l *InventoryLoader) LoadThunk(key int) func() (*Inventory, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*Inventory, error) {
+	return func() (*model.Inventory, error) {
 		<-batch.done
 
-		var data *Inventory
+		var data *model.Inventory
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -111,14 +113,14 @@ func (l *InventoryLoader) LoadThunk(key int) func() (*Inventory, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *InventoryLoader) LoadAll(keys []int) ([]*Inventory, []error) {
-	results := make([]func() (*Inventory, error), len(keys))
+func (l *InventoryLoader) LoadAll(keys []int) ([]*model.Inventory, []error) {
+	results := make([]func() (*model.Inventory, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	inventorys := make([]*Inventory, len(keys))
+	inventorys := make([]*model.Inventory, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		inventorys[i], errors[i] = thunk()
@@ -129,13 +131,13 @@ func (l *InventoryLoader) LoadAll(keys []int) ([]*Inventory, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Inventorys.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *InventoryLoader) LoadAllThunk(keys []int) func() ([]*Inventory, []error) {
-	results := make([]func() (*Inventory, error), len(keys))
+func (l *InventoryLoader) LoadAllThunk(keys []int) func() ([]*model.Inventory, []error) {
+	results := make([]func() (*model.Inventory, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*Inventory, []error) {
-		inventorys := make([]*Inventory, len(keys))
+	return func() ([]*model.Inventory, []error) {
+		inventorys := make([]*model.Inventory, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			inventorys[i], errors[i] = thunk()
@@ -147,7 +149,7 @@ func (l *InventoryLoader) LoadAllThunk(keys []int) func() ([]*Inventory, []error
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *InventoryLoader) Prime(key int, value *Inventory) bool {
+func (l *InventoryLoader) Prime(key int, value *model.Inventory) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -167,9 +169,9 @@ func (l *InventoryLoader) Clear(key int) {
 	l.mu.Unlock()
 }
 
-func (l *InventoryLoader) unsafeSet(key int, value *Inventory) {
+func (l *InventoryLoader) unsafeSet(key int, value *model.Inventory) {
 	if l.cache == nil {
-		l.cache = map[int]*Inventory{}
+		l.cache = map[int]*model.Inventory{}
 	}
 	l.cache[key] = value
 }

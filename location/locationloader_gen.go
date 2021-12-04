@@ -5,12 +5,14 @@ package location
 import (
 	"sync"
 	"time"
+
+	"bookstop/graph/model"
 )
 
 // LocationLoaderConfig captures the config to create a new LocationLoader
 type LocationLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []int) ([]*Location, []error)
+	Fetch func(keys []int) ([]*model.Location, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -31,7 +33,7 @@ func NewLocationLoader(config LocationLoaderConfig) *LocationLoader {
 // LocationLoader batches and caches requests
 type LocationLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []int) ([]*Location, []error)
+	fetch func(keys []int) ([]*model.Location, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -42,7 +44,7 @@ type LocationLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[int]*Location
+	cache map[int]*model.Location
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -54,25 +56,25 @@ type LocationLoader struct {
 
 type locationLoaderBatch struct {
 	keys    []int
-	data    []*Location
+	data    []*model.Location
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Location by key, batching and caching will be applied automatically
-func (l *LocationLoader) Load(key int) (*Location, error) {
+func (l *LocationLoader) Load(key int) (*model.Location, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Location.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *LocationLoader) LoadThunk(key int) func() (*Location, error) {
+func (l *LocationLoader) LoadThunk(key int) func() (*model.Location, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*Location, error) {
+		return func() (*model.Location, error) {
 			return it, nil
 		}
 	}
@@ -83,10 +85,10 @@ func (l *LocationLoader) LoadThunk(key int) func() (*Location, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*Location, error) {
+	return func() (*model.Location, error) {
 		<-batch.done
 
-		var data *Location
+		var data *model.Location
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -111,14 +113,14 @@ func (l *LocationLoader) LoadThunk(key int) func() (*Location, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *LocationLoader) LoadAll(keys []int) ([]*Location, []error) {
-	results := make([]func() (*Location, error), len(keys))
+func (l *LocationLoader) LoadAll(keys []int) ([]*model.Location, []error) {
+	results := make([]func() (*model.Location, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	locations := make([]*Location, len(keys))
+	locations := make([]*model.Location, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		locations[i], errors[i] = thunk()
@@ -129,13 +131,13 @@ func (l *LocationLoader) LoadAll(keys []int) ([]*Location, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Locations.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *LocationLoader) LoadAllThunk(keys []int) func() ([]*Location, []error) {
-	results := make([]func() (*Location, error), len(keys))
+func (l *LocationLoader) LoadAllThunk(keys []int) func() ([]*model.Location, []error) {
+	results := make([]func() (*model.Location, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*Location, []error) {
-		locations := make([]*Location, len(keys))
+	return func() ([]*model.Location, []error) {
+		locations := make([]*model.Location, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			locations[i], errors[i] = thunk()
@@ -147,7 +149,7 @@ func (l *LocationLoader) LoadAllThunk(keys []int) func() ([]*Location, []error) 
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *LocationLoader) Prime(key int, value *Location) bool {
+func (l *LocationLoader) Prime(key int, value *model.Location) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -167,9 +169,9 @@ func (l *LocationLoader) Clear(key int) {
 	l.mu.Unlock()
 }
 
-func (l *LocationLoader) unsafeSet(key int, value *Location) {
+func (l *LocationLoader) unsafeSet(key int, value *model.Location) {
 	if l.cache == nil {
-		l.cache = map[int]*Location{}
+		l.cache = map[int]*model.Location{}
 	}
 	l.cache[key] = value
 }
