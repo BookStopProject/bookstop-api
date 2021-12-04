@@ -40,16 +40,19 @@ sudo docker tag bookstop registry.digitalocean.com/bookstop/bookstop
 sudo docker push registry.digitalocean.com/bookstop/bookstop
 ```
 
-### Start server
+### Start server (dev)
+
+Start docker compose:
 
 ```bash
-go run server.go
+docker compose -f docker-compose.dev.yml up
 ```
 
-In dev, load `.env` using:
+Run server:
 
 ```bash
 export $(grep -v '^#' .env | xargs)
+go run server.go
 ```
 
 ### Start docker compose

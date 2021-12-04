@@ -1,0 +1,14 @@
+type Event {
+  id: ID!
+  title: String!
+  description: String!
+  href: String!
+  userId: ID!
+  user: User! @goField(forceResolver: true)
+  startedAt: Time!
+  endedAt: Time!
+}
+
+extend type Query {
+  events: [Event!]!
+}

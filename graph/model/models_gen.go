@@ -26,6 +26,17 @@ type Browse struct {
 	EndedAt     *time.Time `json:"endedAt"`
 }
 
+type Event struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Href        string    `json:"href"`
+	UserID      string    `json:"userId"`
+	User        *User     `json:"user"`
+	StartedAt   time.Time `json:"startedAt"`
+	EndedAt     time.Time `json:"endedAt"`
+}
+
 type Exchange struct {
 	ID            string    `json:"id"`
 	UserBookIDOld string    `json:"userBookIdOld"`

@@ -9,7 +9,7 @@ import (
 
 const allSelects = "id, user_book_id_old, user_book_id_new, exchanged_at"
 
-func FindExchangesByUserBookID(ctx context.Context, ubID int) ([]*model.Exchange, error) {
+func FindByUserBookID(ctx context.Context, ubID int) ([]*model.Exchange, error) {
 	rows, err := db.Conn.Query(ctx, "SELECT "+allSelects+" FROM public.exchange WHERE user_book_id_old = $1 OR user_book_id_new = $1 OR user_book_id_original = $1 ORDER BY id DESC", ubID)
 
 	if err != nil {

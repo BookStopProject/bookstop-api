@@ -36,7 +36,7 @@ func (r *queryResolver) Exchanges(ctx context.Context, userBookID string) ([]*mo
 	if err != nil {
 		return nil, err
 	}
-	return exchange.FindExchangesByUserBookID(ctx, intID)
+	return exchange.FindByUserBookID(ctx, intID)
 }
 
 // Exchange returns generated.ExchangeResolver implementation.

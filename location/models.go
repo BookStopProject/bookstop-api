@@ -83,9 +83,11 @@ func LoadManyByIDs(ctx context.Context, ids []int) ([]*Location, []error) {
 	sortedErrs := make([]error, len(ids))
 
 	for i, id := range ids {
-		pos := idToPos[id]
-		sortedResult[i] = result[pos]
-		sortedErrs[i] = errs[pos]
+		pos, ok := idToPos[id]
+		if ok {
+			sortedResult[i] = result[pos]
+			sortedErrs[i] = errs[pos]
+		}
 	}
 
 	return sortedResult, sortedErrs

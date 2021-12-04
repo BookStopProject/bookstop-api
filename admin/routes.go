@@ -4,6 +4,7 @@ import (
 	"bookstop/book"
 	"bookstop/browse"
 	"bookstop/db"
+	"bookstop/event"
 	"bookstop/graph/model"
 	"bookstop/inventory"
 	"bookstop/location"
@@ -11,7 +12,6 @@ import (
 	"bookstop/userbook"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -416,21 +416,45 @@ func apiUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-func apiUserMoneyHack(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	intID, err := strconv.Atoi(ps.ByName("id"))
-	if err != nil {
-		writeErr(w, err, http.StatusBadRequest)
-	}
-	intMoney, err := strconv.Atoi(r.URL.Query().Get("value"))
-	if err != nil {
-		writeErr(w, err, http.StatusBadRequest)
-	}
-	var intNewMoney int
-	err = db.Conn.QueryRow(r.Context(), "UPDATE public.user SET credit=$2 WHERE id=$1 RETURNING credit", intID, intMoney).Scan(&intNewMoney)
+// admin/event
+type DataEvent struct {
+	Events []*event.Event
+}
+
+var tmplEvent = template.Must(template.ParseFiles("admin/event.html", "admin/base.html"))
+
+func apiEvent(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	events, err := event.FindAll(r.Context())
 	if err != nil {
 		writeErr(w, err, http.StatusInternalServerError)
 	}
-	fmt.Fprintf(w, "money = "+strconv.Itoa(intNewMoney))
+	if err := tmplEvent.Execute(w, DataEvent{Events: events}); err != nil {
+		writeErr(w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func apiEventCreate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if err := r.ParseForm(); err != nil {
+		writeErr(w, err, http.StatusBadRequest)
+		return
+	}
+
+	_, err := event.Create(r.Context(),
+		r.PostForm.Get("title"),
+		r.PostForm.Get("description"),
+		r.PostForm.Get("href"),
+		r.PostForm.Get("user_id"),
+		r.PostForm.Get("started_at"),
+		r.PostForm.Get("ended_at"),
+	)
+
+	if err != nil {
+		http.Redirect(w, r, "/admin/event?error="+err.Error(), http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(w, r, "/admin/event", http.StatusSeeOther)
 }
 
 // router
@@ -468,5 +492,6 @@ func Router(router *httprouter.Router) {
 	(*router).GET("/admin/location", basicAuth(apiLocation))
 	(*router).POST("/admin/location", basicAuth(apiLocationCreate))
 	(*router).GET("/admin/user", basicAuth(apiUser))
-	(*router).GET("/admin/user/:id/$$$", basicAuth(apiUserMoneyHack))
+	(*router).GET("/admin/event", basicAuth(apiEvent))
+	(*router).POST("/admin/event", basicAuth(apiEventCreate))
 }
