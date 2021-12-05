@@ -1,0 +1,9 @@
+type HomeStats {
+  userCount: Int!
+  exchangeCount: Int!
+  postCount: Int!
+}
+
+extend type Query {
+  homeStats: HomeStats
+}

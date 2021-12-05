@@ -46,6 +46,12 @@ type Exchange struct {
 	ExchangedAt   time.Time `json:"exchangedAt"`
 }
 
+type HomeStats struct {
+	UserCount     int `json:"userCount"`
+	ExchangeCount int `json:"exchangeCount"`
+	PostCount     int `json:"postCount"`
+}
+
 type Inventory struct {
 	ID         string    `json:"id"`
 	UserBookID string    `json:"userBookId"`

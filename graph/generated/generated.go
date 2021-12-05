@@ -90,6 +90,12 @@ type ComplexityRoot struct {
 		UserBookOld   func(childComplexity int) int
 	}
 
+	HomeStats struct {
+		ExchangeCount func(childComplexity int) int
+		PostCount     func(childComplexity int) int
+		UserCount     func(childComplexity int) int
+	}
+
 	Inventory struct {
 		ID         func(childComplexity int) int
 		Location   func(childComplexity int) int
@@ -133,6 +139,7 @@ type ComplexityRoot struct {
 		Events              func(childComplexity int) int
 		Exchanges           func(childComplexity int, userBookID string) int
 		Foo                 func(childComplexity int) int
+		HomeStats           func(childComplexity int) int
 		Inventories         func(childComplexity int, bookID *string, locationID *string) int
 		InventoryClaimToken func(childComplexity int, id string) int
 		InventoryClaimsMine func(childComplexity int) int
@@ -212,6 +219,7 @@ type QueryResolver interface {
 	Search(ctx context.Context, query string, limit int, skip *int) ([]*model.Book, error)
 	Events(ctx context.Context) ([]*model.Event, error)
 	Exchanges(ctx context.Context, userBookID string) ([]*model.Exchange, error)
+	HomeStats(ctx context.Context) (*model.HomeStats, error)
 	Inventories(ctx context.Context, bookID *string, locationID *string) ([]*model.Inventory, error)
 	InventoryClaimsMine(ctx context.Context) ([]*model.InventoryClaim, error)
 	InventoryClaimToken(ctx context.Context, id string) (string, error)
@@ -443,6 +451,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Exchange.UserBookOld(childComplexity), true
+
+	case "HomeStats.exchangeCount":
+		if e.complexity.HomeStats.ExchangeCount == nil {
+			break
+		}
+
+		return e.complexity.HomeStats.ExchangeCount(childComplexity), true
+
+	case "HomeStats.postCount":
+		if e.complexity.HomeStats.PostCount == nil {
+			break
+		}
+
+		return e.complexity.HomeStats.PostCount(childComplexity), true
+
+	case "HomeStats.userCount":
+		if e.complexity.HomeStats.UserCount == nil {
+			break
+		}
+
+		return e.complexity.HomeStats.UserCount(childComplexity), true
 
 	case "Inventory.id":
 		if e.complexity.Inventory.ID == nil {
@@ -713,6 +742,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Foo(childComplexity), true
+
+	case "Query.homeStats":
+		if e.complexity.Query.HomeStats == nil {
+			break
+		}
+
+		return e.complexity.Query.HomeStats(childComplexity), true
 
 	case "Query.inventories":
 		if e.complexity.Query.Inventories == nil {
@@ -1085,6 +1121,16 @@ extend type Query {
 
 extend type Query {
   exchanges(userBookId: ID!): [Exchange!]!
+}
+`, BuiltIn: false},
+	{Name: "graph/index.graphqls", Input: `type HomeStats {
+  userCount: Int!
+  exchangeCount: Int!
+  postCount: Int!
+}
+
+extend type Query {
+  homeStats: HomeStats
 }
 `, BuiltIn: false},
 	{Name: "graph/inventory.graphqls", Input: `type Inventory {
@@ -2615,6 +2661,111 @@ func (ec *executionContext) _Exchange_exchangedAt(ctx context.Context, field gra
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _HomeStats_userCount(ctx context.Context, field graphql.CollectedField, obj *model.HomeStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HomeStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _HomeStats_exchangeCount(ctx context.Context, field graphql.CollectedField, obj *model.HomeStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HomeStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExchangeCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _HomeStats_postCount(ctx context.Context, field graphql.CollectedField, obj *model.HomeStats) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HomeStats",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Inventory_id(ctx context.Context, field graphql.CollectedField, obj *model.Inventory) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3771,6 +3922,38 @@ func (ec *executionContext) _Query_exchanges(ctx context.Context, field graphql.
 	res := resTmp.([]*model.Exchange)
 	fc.Result = res
 	return ec.marshalNExchange2ᚕᚖbookstopᚋgraphᚋmodelᚐExchangeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_homeStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().HomeStats(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.HomeStats)
+	fc.Result = res
+	return ec.marshalOHomeStats2ᚖbookstopᚋgraphᚋmodelᚐHomeStats(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_inventories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6267,6 +6450,43 @@ func (ec *executionContext) _Exchange(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var homeStatsImplementors = []string{"HomeStats"}
+
+func (ec *executionContext) _HomeStats(ctx context.Context, sel ast.SelectionSet, obj *model.HomeStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, homeStatsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HomeStats")
+		case "userCount":
+			out.Values[i] = ec._HomeStats_userCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "exchangeCount":
+			out.Values[i] = ec._HomeStats_exchangeCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "postCount":
+			out.Values[i] = ec._HomeStats_postCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var inventoryImplementors = []string{"Inventory"}
 
 func (ec *executionContext) _Inventory(ctx context.Context, sel ast.SelectionSet, obj *model.Inventory) graphql.Marshaler {
@@ -6617,6 +6837,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "homeStats":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_homeStats(ctx, field)
 				return res
 			})
 		case "inventories":
@@ -8186,6 +8417,13 @@ func (ec *executionContext) marshalOBrowse2ᚖbookstopᚋgraphᚋmodelᚐBrowse(
 		return graphql.Null
 	}
 	return ec._Browse(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOHomeStats2ᚖbookstopᚋgraphᚋmodelᚐHomeStats(ctx context.Context, sel ast.SelectionSet, v *model.HomeStats) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._HomeStats(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
