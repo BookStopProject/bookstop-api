@@ -1,7 +1,7 @@
 package browse
 
 import (
-	"bookstop/book"
+	"bookstop/app/book"
 	"bookstop/db"
 	"bookstop/graph/model"
 	"context"

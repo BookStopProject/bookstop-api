@@ -1,7 +1,7 @@
 package thought
 
 import (
-	"bookstop/book"
+	"bookstop/app/book"
 	"bookstop/db"
 	"context"
 	"errors"

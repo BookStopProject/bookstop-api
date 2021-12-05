@@ -32,14 +32,6 @@ go generate ./...
 go run github.com/vektah/dataloaden UserLoader string *github.com/dataloaden/example.User
 ```
 
-### Build Docker
-
-```bash
-sudo docker build . -t bookstop
-sudo docker tag bookstop registry.digitalocean.com/bookstop/bookstop
-sudo docker push registry.digitalocean.com/bookstop/bookstop
-```
-
 ### Start server (dev)
 
 Start docker compose:

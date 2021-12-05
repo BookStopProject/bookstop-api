@@ -4,8 +4,8 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"bookstop/app/location"
 	"bookstop/graph/model"
-	"bookstop/location"
 	"context"
 )
 

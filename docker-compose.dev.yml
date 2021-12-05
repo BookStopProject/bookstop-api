@@ -2,7 +2,7 @@ services:
   migrate:
     image: migrate/migrate
     volumes:
-      - ./migrate:/migrations
+      - "./migrations:/migrations"
     command: ["-path", "/migrations", "-database",  "postgresql://postgres@postgres/postgres?sslmode=disable", "up"]
     depends_on:
       - postgres

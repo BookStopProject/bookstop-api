@@ -1,11 +1,11 @@
 package inventory
 
 import (
+	"bookstop/app/book"
+	"bookstop/app/user"
+	"bookstop/app/userbook"
 	"bookstop/auth"
-	"bookstop/book"
 	"bookstop/db"
-	"bookstop/user"
-	"bookstop/userbook"
 	"context"
 	"errors"
 	"strconv"

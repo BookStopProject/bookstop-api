@@ -1,8 +1,8 @@
 package auth
 
 import (
+	"bookstop/app/user"
 	"bookstop/db"
-	"bookstop/user"
 	"context"
 	"log"
 	"net/http"

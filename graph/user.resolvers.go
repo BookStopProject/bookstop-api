@@ -4,10 +4,10 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"bookstop/app/user"
 	"bookstop/auth"
 	"bookstop/graph/model"
 	"bookstop/loader"
-	"bookstop/user"
 	"context"
 	"strconv"
 )

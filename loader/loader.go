@@ -1,12 +1,12 @@
 package loader
 
 import (
-	"bookstop/book"
+	"bookstop/app/book"
+	"bookstop/app/inventory"
+	"bookstop/app/location"
+	"bookstop/app/user"
+	"bookstop/app/userbook"
 	"bookstop/graph/model"
-	"bookstop/inventory"
-	"bookstop/location"
-	"bookstop/user"
-	"bookstop/userbook"
 	"context"
 	"net/http"
 	"time"

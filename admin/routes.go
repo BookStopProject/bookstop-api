@@ -1,15 +1,15 @@
 package admin
 
 import (
-	"bookstop/book"
-	"bookstop/browse"
+	"bookstop/app/book"
+	"bookstop/app/browse"
+	"bookstop/app/event"
+	"bookstop/app/inventory"
+	"bookstop/app/location"
+	"bookstop/app/user"
+	"bookstop/app/userbook"
 	"bookstop/db"
-	"bookstop/event"
 	"bookstop/graph/model"
-	"bookstop/inventory"
-	"bookstop/location"
-	"bookstop/user"
-	"bookstop/userbook"
 	"encoding/json"
 	"errors"
 	"html/template"

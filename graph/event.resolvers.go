@@ -4,7 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"bookstop/event"
+	"bookstop/app/event"
 	"bookstop/graph/generated"
 	"bookstop/graph/model"
 	"bookstop/loader"
