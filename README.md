@@ -1,5 +1,15 @@
 # bookstop-api
 
+API Server for BookStop, written in Golang. Exchange books with each other, share your thoughts, participate in events, all in one stop.
+
+Website: https://bookstop.app
+
+| Codebase                                                            |                Description                 |
+| :------------------------------------------------------------------ | :----------------------------------------: |
+| [bookstop-front](https://github.com/BookStopProject/bookstop-front) |        Next.js Frontend Application        |
+| [bookstop-api](https://github.com/BookStopProject/bookstop-api)     | Golang API Server (GraphQL) and Admin Page |
+| [bookstop-home](https://github.com/BookStopProject/bookstop-home)   |              Preact homepage               |
+
 ## .env
 
 ```env
