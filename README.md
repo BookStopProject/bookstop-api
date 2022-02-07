@@ -11,7 +11,7 @@ GOOGLE_CLIENT_SECRET=
 API_URL=https://api.bookstop.app
 APP_URL=https://bookstop.app
 HMAC_SECRET=
-ADMIN_AUTH=
+ADMIN_AUTH=username:password
 ```
 
 ## Workflow
