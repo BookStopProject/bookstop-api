@@ -4,7 +4,7 @@ CREATE TABLE public."book" (
     subtitle varchar(256),
     description text,
     published_year integer NOT NULL,
-    genre_id integer,
+    genre_id integer NOT NULL,
     tradein_credit integer NOT NULL,
     exchange_credit integer NOT NULL,
     FOREIGN KEY (genre_id) REFERENCES public."genre" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
@@ -68,7 +68,7 @@ CREATE TABLE public."user_book" (
 CREATE TABLE public."post" (
     id serial PRIMARY KEY,
     text varchar(250),
-    creation_time timestamp NOT NULL,
+    creation_time timestamp WITHOUT time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     book_id integer NOT NULL,
     user_id integer NOT NULL,
     is_recommending boolean NOT NULL,
@@ -77,7 +77,8 @@ CREATE TABLE public."post" (
 );
 
 CREATE TABLE public."location" (
-    id serial PRIMARY KEY name varchar(128) NOT NULL,
+    id serial PRIMARY KEY,
+    name varchar(128) NOT NULL,
     address varchar(512) NOT NULL,
 );
 
@@ -91,11 +92,38 @@ CREATE TABLE public."exchange" (
     FOREIGN KEY (next_user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
-CREATE TABLE public."inventory_entry" ();
+CREATE TABLE public."inventory_entry" (
+    id serial PRIMARY KEY,
+    book_copy_id integer,
+    location_id integer,
+    creation_time timestamp WITHOUT time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    removal_time timestamp WITHOUT time zone,
+    FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (location_id) REFERENCES public."location" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
 
-CREATE TABLE public."event_inventory_entry" ();
+CREATE TABLE public."event_inventory_entry" (
+    event_id integer,
+    inventory_entry_id integer,
+    PRIMARY KEY (event_id, inventory_entry_id),
+    FOREIGN KEY (event_id) REFERENCES public."event" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (inventory_entry_id) REFERENCES public."inventory_entry" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
 
-CREATE TABLE public."invoice" ();
+CREATE TABLE public."invoice" (
+    id serial PRIMARY KEY,
+    user_id integer,
+    creation_time timestamp WITHOUT time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
 
-CREATE TABLE public."invoice_entry" ();
+CREATE TABLE public."invoice_entry" (
+    invoice_id integer,
+    credit integer,
+    is_trade_in boolean,
+    inventory_entry_id integer,
+    PRIMARY KEY (invoice_id, inventory_entry_id),
+    FOREIGN KEY (invoice_id) REFERENCES public."invoice" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (inventory_entry_id) REFERENCES public."inventory_entry" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
 
