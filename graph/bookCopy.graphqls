@@ -1,0 +1,13 @@
+enum BookCondition {
+  new
+  like_new
+  good
+  acceptable
+}
+
+type BookCopy {
+  id: ID!
+  book: Book!
+  location: Location!
+  condition: String!
+}

@@ -9,6 +9,13 @@ const (
 	BookConditionAcceptable BookCondition = "acceptable"
 )
 
+const (
+	BookConditionNewScale        = 1.0
+	BookConditionLikeNewScale    = 0.9
+	BookConditionGoodScale       = 0.7
+	BookConditionAcceptableScale = 0.5
+)
+
 type BookCopy struct {
 	ID         int           `json:"id"`
 	BookID     int           `json:"bookId"`

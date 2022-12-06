@@ -23,13 +23,13 @@ func (r *queryResolver) BookSearch(ctx context.Context, query string) ([]*models
 
 // Author is the resolver for the author field.
 func (r *queryResolver) Author(ctx context.Context, id string) (*models.Author, error) {
-	numId,_ := strconv.Atoi(id)
+	numId, _ := strconv.Atoi(id)
 	return models.FindAuthorByID(ctx, numId)
 }
 
 // Genre is the resolver for the genre field.
 func (r *queryResolver) Genre(ctx context.Context, id string) (*models.Genre, error) {
-	numId,_ := strconv.Atoi(id)
+	numId, _ := strconv.Atoi(id)
 	return models.FindGenreByID(ctx, numId)
 }
 

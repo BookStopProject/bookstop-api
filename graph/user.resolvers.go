@@ -7,8 +7,19 @@ package graph
 import (
 	"bookstop/models"
 	"context"
+	"fmt"
 	"strconv"
 )
+
+// MeUpdate is the resolver for the meUpdate field.
+func (r *mutationResolver) MeUpdate(ctx context.Context, name string, bio *string, profilePicture *string) (*models.User, error) {
+	panic(fmt.Errorf("not implemented: MeUpdate - meUpdate"))
+}
+
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*models.User, error) {
+	panic(fmt.Errorf("not implemented: Me - me"))
+}
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id string) (*models.User, error) {

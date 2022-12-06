@@ -1,0 +1,10 @@
+type Location {
+  id: ID!
+  name: String!
+  Address: String!
+}
+
+extend type Query {
+  location(id: ID!): Location
+  locations: [Location!]!
+}

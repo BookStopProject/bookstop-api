@@ -1,0 +1,22 @@
+type InvoiceEntry {
+  invoiceId: ID!
+  Credit: Int!
+  bookCopyId: ID!
+  bookCopy: BookCopy!
+}
+
+type Invoice {
+  id: ID!
+  creationTime: Time!
+  locationId: Int!
+  location: Location!
+}
+
+extend type Query {
+  bookCopiesAvailable(bookId: ID!): [BookCopy!]!
+  meInvoices: [Invoice!]!
+}
+
+extend type Mutation {
+  exchange(bookCopyId: [ID!]!): Invoice!
+}
