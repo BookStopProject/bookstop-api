@@ -42,9 +42,9 @@ func FindPostByID(ctx context.Context, id int) (*Post, error) {
 		book.author_id,
 		author.id,
 		author.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.post
 		JOIN public.book ON post.book_id = book.id
@@ -80,7 +80,11 @@ func FindPostByID(ctx context.Context, id int) (*Post, error) {
 	return &post, nil
 }
 
-func FindAllPosts(ctx context.Context) ([]*Post, error) {
+func FindAllPosts(ctx context.Context, limit int, before *int) ([]*Post, error) {
+	if limit == 0 {
+		limit = 10
+	}
+
 	rows, err := db.Conn.Query(ctx, `SELECT
 		post.id,
 		post.text,
@@ -94,15 +98,17 @@ func FindAllPosts(ctx context.Context) ([]*Post, error) {
 		book.author_id,
 		author.id,
 		author.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.post
-		JOIN public.book ON post.book_id = book.id
-		JOIN public.author ON book.author_id = author.id
-		JOIN public.user ON post.user_id = user.id
-	`)
+		JOIN public."book" ON post.book_id = book.id
+		JOIN public."author" ON book.author_id = author.id
+		JOIN public."user" ON post.user_id = "user".id
+	WHERE post.id < $2
+	LIMIT $1
+	`, limit, before)
 
 	if err != nil {
 		return nil, err
@@ -139,7 +145,11 @@ func FindAllPosts(ctx context.Context) ([]*Post, error) {
 	return posts, nil
 }
 
-func FindPostsByUserID(ctx context.Context, userID int) ([]*Post, error) {
+func FindPostsByUserID(ctx context.Context, userID int, limit int, before *int) ([]*Post, error) {
+	if limit == 0 {
+		limit = 10
+	}
+
 	rows, err := db.Conn.Query(ctx, `SELECT
 		post.id,
 		post.text,
@@ -153,9 +163,9 @@ func FindPostsByUserID(ctx context.Context, userID int) ([]*Post, error) {
 		book.author_id,
 		author.id,
 		author.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.post
 		JOIN public.book ON post.book_id = book.id
@@ -163,7 +173,9 @@ func FindPostsByUserID(ctx context.Context, userID int) ([]*Post, error) {
 		JOIN public.user ON post.user_id = user.id
 	WHERE
 		post.user_id = $1
-	`, userID)
+		AND post.id < $3
+	LIMIT $2
+	`, userID, limit, before)
 
 	if err != nil {
 		return nil, err
@@ -200,7 +212,11 @@ func FindPostsByUserID(ctx context.Context, userID int) ([]*Post, error) {
 	return posts, nil
 }
 
-func FindPostsByBookID(ctx context.Context, bookID int) ([]*Post, error) {
+func FindPostsByBookID(ctx context.Context, bookID int, limit int, before *int) ([]*Post, error) {
+	if limit == 0 {
+		limit = 10
+	}
+
 	rows, err := db.Conn.Query(ctx, `SELECT
 		post.id,
 		post.text,
@@ -224,7 +240,9 @@ func FindPostsByBookID(ctx context.Context, bookID int) ([]*Post, error) {
 		JOIN public.user ON post.user_id = user.id
 	WHERE
 		post.book_id = $1
-	`, bookID)
+		AND post.id < $3
+	LIMIT $2
+	`, bookID, limit, before)
 
 	if err != nil {
 		return nil, err

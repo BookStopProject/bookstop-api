@@ -8,7 +8,7 @@ type Post {
 }
 
 extend type Query {
-  posts(userId: ID, bookId: ID, limit: Int, offset: Int): [Post!]!
+  posts(userId: ID, bookId: ID, limit: Int!, before: Int): [Post!]!
   post(id: ID!): Post
 }
 

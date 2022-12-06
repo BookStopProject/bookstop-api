@@ -83,16 +83,16 @@ func (r *mutationResolver) PostDelete(ctx context.Context, id string) (bool, err
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context, userID *string, bookID *string, limit *int, offset *int) ([]*models.Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, userID *string, bookID *string, limit int, before *int) ([]*models.Post, error) {
 	if userID != nil {
 		usedIDNum, _ := strconv.Atoi(*userID)
-		return models.FindPostsByUserID(ctx, usedIDNum)
+		return models.FindPostsByUserID(ctx, usedIDNum, limit, before)
 	}
 	if bookID != nil {
 		bookIDNum, _ := strconv.Atoi(*bookID)
-		return models.FindPostsByBookID(ctx, bookIDNum)
+		return models.FindPostsByBookID(ctx, bookIDNum, limit, before)
 	}
-	return models.FindAllPosts(ctx)
+	return models.FindAllPosts(ctx, limit, before)
 }
 
 // Post is the resolver for the post field.

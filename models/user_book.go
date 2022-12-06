@@ -49,9 +49,9 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 		author.name,
 		genre.id,
 		genre.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.user_book
 		JOIN public.book ON user_book.book_id = book.id
@@ -106,9 +106,9 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 		author.name,
 		genre.id,
 		genre.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.user_book
 		JOIN public.book ON user_book.book_id = book.id

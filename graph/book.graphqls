@@ -22,7 +22,7 @@ type Book {
 
 extend type Query {
   book(id: ID!): Book
-  bookSearch(query: String!): [Book!]!
+  bookSearch(query: String!, limit: Int!, skip: Int!): [Book!]!
   author(id: ID!): Author
   genre(id: ID!): Genre
   genres: [Genre!]!

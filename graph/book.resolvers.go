@@ -7,18 +7,18 @@ package graph
 import (
 	"bookstop/models"
 	"context"
-	"fmt"
 	"strconv"
 )
 
 // Book is the resolver for the book field.
 func (r *queryResolver) Book(ctx context.Context, id string) (*models.Book, error) {
-	panic(fmt.Errorf("not implemented: Book - book"))
+	idNum, _ := strconv.Atoi(id)
+	return models.FindBookByID(ctx, idNum)
 }
 
 // BookSearch is the resolver for the bookSearch field.
-func (r *queryResolver) BookSearch(ctx context.Context, query string) ([]*models.Book, error) {
-	return models.SearchBooks(ctx, query)
+func (r *queryResolver) BookSearch(ctx context.Context, query string, limit int, skip int) ([]*models.Book, error) {
+	return models.SearchBooks(ctx, query, limit, skip)
 }
 
 // Author is the resolver for the author field.

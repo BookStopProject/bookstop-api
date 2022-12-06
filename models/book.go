@@ -66,7 +66,10 @@ WHERE
 	return &book, nil
 }
 
-func SearchBooks(ctx context.Context, query string) ([]*Book, error) {
+func SearchBooks(ctx context.Context, query string, limit int, skip int) ([]*Book, error) {
+	if limit == 0 {
+		limit = 10
+	}
 	rows, err := db.Conn.Query(ctx, `SELECT
 		b.id,
 		b.title,
@@ -86,7 +89,8 @@ func SearchBooks(ctx context.Context, query string) ([]*Book, error) {
 		b.title ILIKE $1
 		OR b.subtitle ILIKE $1
 		OR b.description ILIKE $1
-`, "%"+query+"%")
+	LIMIT $2 OFFSET $3
+`, "%"+query+"%", limit, skip)
 	if err != nil {
 		return nil, err
 	}
