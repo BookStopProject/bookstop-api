@@ -80,16 +80,16 @@ func FindUserByOauthID(ctx context.Context, oauthID string) (*User, error) {
 	return &user, nil
 }
 
-func UpdateUser(ctx context.Context, id int, name string, bio string) error {
+func UpdateUser(ctx context.Context, user *User) (*User, error) {
 	_, err := db.Conn.Exec(ctx, `UPDATE public.user SET
 		name = $1,
 		bio = $2
 	WHERE
-		id = $3`, name, bio, id)
+		id = $3`, user.Name, user.Bio, user.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
 
 func CreateUser(ctx context.Context, name string, oauthID string, email string, profilePicture *string) (*User, error) {

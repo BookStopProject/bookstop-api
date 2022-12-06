@@ -1,0 +1,18 @@
+type UserBook {
+  id: ID!
+  user: User!
+  book: Book!
+  startDate: Time
+  endDate: Time
+}
+
+extend type Query {
+  userBook(id: ID!): UserBook
+  userBooks(userId: ID): [UserBook!]!
+}
+
+extend type Mutation {
+  userBookAdd(bookId: ID!, startDate: String, endDate: String): UserBook!
+  userBookEdit(id: ID!, startDate: String, endDate: String): UserBook!
+  userBookDelete(id: ID!): Boolean!
+}

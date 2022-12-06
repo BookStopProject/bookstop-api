@@ -7,15 +7,16 @@ package graph
 import (
 	"bookstop/models"
 	"context"
-	"fmt"
+	"strconv"
 )
 
 // Location is the resolver for the location field.
 func (r *queryResolver) Location(ctx context.Context, id string) (*models.Location, error) {
-	panic(fmt.Errorf("not implemented: Location - location"))
+	idNum, _ := strconv.Atoi(id)
+	return models.FindLocationByID(ctx, idNum)
 }
 
 // Locations is the resolver for the locations field.
 func (r *queryResolver) Locations(ctx context.Context) ([]*models.Location, error) {
-	panic(fmt.Errorf("not implemented: Locations - locations"))
+	return models.FindAllLocations(ctx)
 }

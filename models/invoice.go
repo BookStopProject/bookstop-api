@@ -19,11 +19,10 @@ type Invoice struct {
 }
 
 type InvoiceEntry struct {
-	InvoiceID        int `json:"invoiceId"`
-	Credit           int `json:"credit"`
-	InventoryEntryID int `json:"inventoryEntryId"`
-	BookCopyID       int `json:"bookCopyId"`
-	BookCopy         *BookCopy
+	InvoiceID  int `json:"invoiceId"`
+	Credit     int `json:"credit"`
+	BookCopyID int `json:"bookCopyId"`
+	BookCopy   *BookCopy
 }
 
 func FindInvoiceByID(ctx context.Context, id int) (*Invoice, error) {
