@@ -53,7 +53,6 @@ docker compose -f docker-compose.dev.yml up
 Run server:
 
 ```bash
-export $(grep -v '^#' .env | xargs)
 go run server.go
 ```
 

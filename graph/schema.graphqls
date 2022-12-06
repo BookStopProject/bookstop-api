@@ -1,19 +1,18 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Test {
+  id: ID!
+  status: String!
+}
+
 type Query {
-  foo: Int
+  test: Test!
 }
 
 type Mutation {
-  foo: Int
+  test: Test!
 }
 
 scalar Time
-
-directive @goModel(
-  model: String
-  models: [String!]
-) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
-
-directive @goField(
-  forceResolver: Boolean
-  name: String
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

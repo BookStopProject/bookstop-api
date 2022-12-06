@@ -1,28 +1,29 @@
+type Author {
+  id: ID!
+  name: String!
+}
+
+type Genre {
+  id: ID!
+  name: String!
+  description: String
+}
+
 type Book {
   id: ID!
   title: String!
   subtitle: String
-  authors: [String!]!
-  description: String!
-  publishedYear: Int!
   imageUrl: String
-  isbn: String
-}
-
-type Browse {
-  id: ID!
-  name: String!
   description: String
-  imageUrl: String
-  startedAt: Time
-  endedAt: Time
+  publishedYear: Int
+  author: Author
+  genre: Genre
 }
 
 extend type Query {
   book(id: ID!): Book
-  books(ids: [ID!]!): [Book]!
-  browses: [Browse!]!
-  browse(id: ID!): Browse
-  browseBooks(id: ID!): [Book!]!
-  search(query: String!, limit: Int!, skip: Int): [Book!]!
+  bookSearch(query: String!): [Book!]!
+  author(id: ID!): Author
+  genre(id: ID!): Genre
+  genres: [Genre!]!
 }

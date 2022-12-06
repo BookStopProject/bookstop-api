@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"bookstop/app/user"
 	"bookstop/db"
+	"bookstop/models"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -29,7 +30,7 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func ForContext(ctx context.Context) (*user.User, error) {
+func ForContext(ctx context.Context) (*models.User, error) {
 	authCode, _ := ctx.Value(authCodeCtxKey).(string)
 	if authCode == "" {
 		return nil, nil
@@ -45,7 +46,7 @@ func ForContext(ctx context.Context) (*user.User, error) {
 
 	userIDInt, _ := strconv.Atoi(userID)
 
-	return user.FindByID(ctx, userIDInt)
+	return models.FindUserByID(ctx, userIDInt)
 }
 
 func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error) {
@@ -55,19 +56,20 @@ func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error)
 		signOut(ctx, prevAuthCode)
 	}
 
-	userID, err := user.FindIDByOauthID(ctx, profile.ID)
+	user, err := models.FindUserByOauthID(ctx, profile.ID)
 	if err != nil {
 		return "", err
 	}
 
-	if userID == nil {
+	if user == nil {
 		// Create new user
-		u, err := user.Create(ctx, profile.Name, profile.ID, profile.Email, profile.Picture)
+		if profile.Email == nil {
+			return "", errors.New("email is required")
+		}
+		user, err = models.CreateUser(ctx, profile.Name, profile.ID, *profile.Email, profile.Picture)
 		if err != nil {
 			return "", err
 		}
-		newUserID := int(u.ID.Int)
-		userID = &newUserID
 	}
 
 	authCode, err := gonanoid.New()
@@ -75,7 +77,7 @@ func signIn(ctx context.Context, profile *GoogleProfileResponse) (string, error)
 		return "", err
 	}
 
-	_, err = db.RDB.Set(ctx, redisAuthKeyPrefix+authCode, *userID, 0).Result()
+	_, err = db.RDB.Set(ctx, redisAuthKeyPrefix+authCode, user.ID, 0).Result()
 
 	if err != nil {
 		return "", err
@@ -95,5 +97,3 @@ func getHmacSecret() []byte {
 	}
 	return []byte(hmacSecret)
 }
-
-var HmacSecret = getHmacSecret()

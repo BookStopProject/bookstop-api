@@ -6,23 +6,23 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
 )
 
-func initDB() *pgxpool.Pool {
+func initDB() *pgx.Conn {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatalln("No DATABASE_URL env")
 	}
 
-	conn, err := pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 
 	if err != nil {
 		log.Printf("Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
-	log.Printf("Connected to database: %s", conn.Config().ConnConfig.Database)
+	log.Printf("Connected to database: %s", conn.Config().Database)
 
 	return conn
 }
