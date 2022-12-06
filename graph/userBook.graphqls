@@ -1,6 +1,8 @@
 type UserBook {
   id: ID!
+  userId: Int!
   user: User!
+  bookId: Int!
   book: Book!
   startDate: Time
   endDate: Time

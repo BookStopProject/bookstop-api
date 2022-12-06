@@ -20,10 +20,18 @@ type Book {
   genre: Genre
 }
 
+type Browse {
+  id: ID!
+  name: String!
+  description: String
+  books: [Book!]! @goField(forceResolver: true)
+}
+
 extend type Query {
   book(id: ID!): Book
   bookSearch(query: String!, limit: Int!, skip: Int!): [Book!]!
   author(id: ID!): Author
   genre(id: ID!): Genre
   genres: [Genre!]!
+  browses: [Browse!]!
 }

@@ -10,6 +10,11 @@ import (
 	"strconv"
 )
 
+// Books is the resolver for the books field.
+func (r *browseResolver) Books(ctx context.Context, obj *models.Browse) ([]*models.Book, error) {
+	return models.FindBrowseBooks(ctx, obj.ID)
+}
+
 // Book is the resolver for the book field.
 func (r *queryResolver) Book(ctx context.Context, id string) (*models.Book, error) {
 	idNum, _ := strconv.Atoi(id)
@@ -37,3 +42,14 @@ func (r *queryResolver) Genre(ctx context.Context, id string) (*models.Genre, er
 func (r *queryResolver) Genres(ctx context.Context) ([]*models.Genre, error) {
 	return models.FindAllGenres(ctx)
 }
+
+// Browses is the resolver for the browses field.
+func (r *queryResolver) Browses(ctx context.Context) ([]*models.Browse, error) {
+	return models.FindAllBrowses(ctx)
+}
+
+// Browse returns BrowseResolver implementation.
+func (r *Resolver) Browse() BrowseResolver { return &browseResolver{r} }
+
+type browseResolver struct{ *Resolver }
+

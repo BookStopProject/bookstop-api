@@ -126,3 +126,17 @@ CREATE TABLE public."invoice_entry" (
     FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
+CREATE TABLE public."browse" (
+    id serial PRIMARY KEY,
+    name varchar(128) NOT NULL,
+    description varchar(512) NULL
+);
+
+CREATE TABLE public."browse_book" (
+    browse_id integer,
+    book_id integer,
+    PRIMARY KEY (browse_id, book_id),
+    FOREIGN KEY (browse_id) REFERENCES public."browse" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (book_id) REFERENCES public."book" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
+
