@@ -100,7 +100,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		Exchange       func(childComplexity int, bookCopyID []string) int
-		MeUpdate       func(childComplexity int, name string, bio *string, profilePicture *string) int
+		MeUpdate       func(childComplexity int, name string, bio *string) int
 		PostCreate     func(childComplexity int, text string, bookID string, isRecommending bool) int
 		PostDelete     func(childComplexity int, id string) int
 		PostUpdate     func(childComplexity int, id string, text string, isRecommending bool) int
@@ -170,7 +170,7 @@ type MutationResolver interface {
 	PostCreate(ctx context.Context, text string, bookID string, isRecommending bool) (*models.Post, error)
 	PostUpdate(ctx context.Context, id string, text string, isRecommending bool) (*models.Post, error)
 	PostDelete(ctx context.Context, id string) (bool, error)
-	MeUpdate(ctx context.Context, name string, bio *string, profilePicture *string) (*models.User, error)
+	MeUpdate(ctx context.Context, name string, bio *string) (*models.User, error)
 	UserBookAdd(ctx context.Context, bookID string, startDate *string, endDate *string) (*models.UserBook, error)
 	UserBookEdit(ctx context.Context, id string, startDate *string, endDate *string) (*models.UserBook, error)
 	UserBookDelete(ctx context.Context, id string) (bool, error)
@@ -387,7 +387,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InvoiceEntry.InvoiceID(childComplexity), true
 
-	case "Location.Address":
+	case "Location.address":
 		if e.complexity.Location.Address == nil {
 			break
 		}
@@ -430,7 +430,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MeUpdate(childComplexity, args["name"].(string), args["bio"].(*string), args["profilePicture"].(*string)), true
+		return e.complexity.Mutation.MeUpdate(childComplexity, args["name"].(string), args["bio"].(*string)), true
 
 	case "Mutation.postCreate":
 		if e.complexity.Mutation.PostCreate == nil {
@@ -748,7 +748,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.CreationTime(childComplexity), true
 
-	case "User.Credit":
+	case "User.credit":
 		if e.complexity.User.Credit == nil {
 			break
 		}
@@ -940,15 +940,6 @@ func (ec *executionContext) field_Mutation_meUpdate_args(ctx context.Context, ra
 		}
 	}
 	args["bio"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["profilePicture"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profilePicture"))
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["profilePicture"] = arg2
 	return args, nil
 }
 
@@ -1922,14 +1913,11 @@ func (ec *executionContext) _BookCopy_location(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*models.Location)
 	fc.Result = res
-	return ec.marshalNLocation2ᚖbookstopᚋmodelsᚐLocation(ctx, field.Selections, res)
+	return ec.marshalOLocation2ᚖbookstopᚋmodelsᚐLocation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BookCopy_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1944,8 +1932,8 @@ func (ec *executionContext) fieldContext_BookCopy_location(ctx context.Context, 
 				return ec.fieldContext_Location_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Location_name(ctx, field)
-			case "Address":
-				return ec.fieldContext_Location_Address(ctx, field)
+			case "address":
+				return ec.fieldContext_Location_address(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -2301,8 +2289,8 @@ func (ec *executionContext) fieldContext_Invoice_location(ctx context.Context, f
 				return ec.fieldContext_Location_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Location_name(ctx, field)
-			case "Address":
-				return ec.fieldContext_Location_Address(ctx, field)
+			case "address":
+				return ec.fieldContext_Location_address(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -2584,8 +2572,8 @@ func (ec *executionContext) fieldContext_Location_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Location_Address(ctx context.Context, field graphql.CollectedField, obj *models.Location) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Location_Address(ctx, field)
+func (ec *executionContext) _Location_address(ctx context.Context, field graphql.CollectedField, obj *models.Location) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Location_address(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2615,7 +2603,7 @@ func (ec *executionContext) _Location_Address(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Location_Address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Location_address(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Location",
 		Field:      field,
@@ -2950,7 +2938,7 @@ func (ec *executionContext) _Mutation_meUpdate(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().MeUpdate(rctx, fc.Args["name"].(string), fc.Args["bio"].(*string), fc.Args["profilePicture"].(*string))
+		return ec.resolvers.Mutation().MeUpdate(rctx, fc.Args["name"].(string), fc.Args["bio"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2985,8 +2973,8 @@ func (ec *executionContext) fieldContext_Mutation_meUpdate(ctx context.Context, 
 				return ec.fieldContext_User_profilePicture(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_User_creationTime(ctx, field)
-			case "Credit":
-				return ec.fieldContext_User_Credit(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -3481,8 +3469,8 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 				return ec.fieldContext_User_profilePicture(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_User_creationTime(ctx, field)
-			case "Credit":
-				return ec.fieldContext_User_Credit(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -4012,8 +4000,8 @@ func (ec *executionContext) fieldContext_Query_location(ctx context.Context, fie
 				return ec.fieldContext_Location_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Location_name(ctx, field)
-			case "Address":
-				return ec.fieldContext_Location_Address(ctx, field)
+			case "address":
+				return ec.fieldContext_Location_address(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -4075,8 +4063,8 @@ func (ec *executionContext) fieldContext_Query_locations(ctx context.Context, fi
 				return ec.fieldContext_Location_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Location_name(ctx, field)
-			case "Address":
-				return ec.fieldContext_Location_Address(ctx, field)
+			case "address":
+				return ec.fieldContext_Location_address(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
 		},
@@ -4265,8 +4253,8 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 				return ec.fieldContext_User_profilePicture(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_User_creationTime(ctx, field)
-			case "Credit":
-				return ec.fieldContext_User_Credit(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -4323,8 +4311,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_profilePicture(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_User_creationTime(ctx, field)
-			case "Credit":
-				return ec.fieldContext_User_Credit(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -4905,8 +4893,8 @@ func (ec *executionContext) fieldContext_User_creationTime(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _User_Credit(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_Credit(ctx, field)
+func (ec *executionContext) _User_credit(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_credit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4933,7 +4921,7 @@ func (ec *executionContext) _User_Credit(ctx context.Context, field graphql.Coll
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_Credit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_credit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -5039,8 +5027,8 @@ func (ec *executionContext) fieldContext_UserBook_user(ctx context.Context, fiel
 				return ec.fieldContext_User_profilePicture(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_User_creationTime(ctx, field)
-			case "Credit":
-				return ec.fieldContext_User_Credit(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7095,9 +7083,6 @@ func (ec *executionContext) _BookCopy(ctx context.Context, sel ast.SelectionSet,
 
 			out.Values[i] = ec._BookCopy_location(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "condition":
 			field := field
 
@@ -7290,9 +7275,9 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Address":
+		case "address":
 
-			out.Values[i] = ec._Location_Address(ctx, field, obj)
+			out.Values[i] = ec._Location_address(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -7945,7 +7930,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "Credit":
+		case "credit":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -7954,7 +7939,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._User_Credit(ctx, field, obj)
+				res = ec._User_credit(ctx, field, obj)
 				return res
 			}
 

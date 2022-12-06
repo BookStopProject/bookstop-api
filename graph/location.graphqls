@@ -1,7 +1,7 @@
 type Location {
   id: ID!
   name: String!
-  Address: String!
+  address: String!
 }
 
 extend type Query {

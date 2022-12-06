@@ -4,7 +4,7 @@ type User {
   bio: String
   profilePicture: String
   creationTime: Time!
-  Credit: Int @goField(forceResolver: true)
+  credit: Int @goField(forceResolver: true)
 }
 
 extend type Query {
@@ -13,5 +13,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  meUpdate(name: String!, bio: String, profilePicture: String): User!
+  meUpdate(name: String!, bio: String): User!
 }

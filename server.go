@@ -48,5 +48,5 @@ func main() {
 	auth.Router(router)
 
 	log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

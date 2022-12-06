@@ -12,7 +12,7 @@ import (
 )
 
 // MeUpdate is the resolver for the meUpdate field.
-func (r *mutationResolver) MeUpdate(ctx context.Context, name string, bio *string, profilePicture *string) (*models.User, error) {
+func (r *mutationResolver) MeUpdate(ctx context.Context, name string, bio *string) (*models.User, error) {
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, err
@@ -23,9 +23,6 @@ func (r *mutationResolver) MeUpdate(ctx context.Context, name string, bio *strin
 	usr.Name = name
 	if bio != nil {
 		usr.Bio = bio
-	}
-	if profilePicture != nil {
-		usr.ProfilePicture = profilePicture
 	}
 	return models.UpdateUser(ctx, usr)
 }

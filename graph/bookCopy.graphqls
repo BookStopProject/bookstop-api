@@ -8,6 +8,6 @@ enum BookCondition {
 type BookCopy {
   id: ID!
   book: Book!
-  location: Location!
+  location: Location
   condition: String!
 }
