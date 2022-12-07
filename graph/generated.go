@@ -118,7 +118,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		Exchange       func(childComplexity int, bookCopyID []string) int
+		Exchange       func(childComplexity int, bookCopyIds []string) int
 		MeUpdate       func(childComplexity int, name string, bio *string) int
 		PostCreate     func(childComplexity int, text string, bookID string, isRecommending bool) int
 		PostDelete     func(childComplexity int, id string) int
@@ -206,7 +206,7 @@ type BrowseResolver interface {
 }
 type MutationResolver interface {
 	Test(ctx context.Context) (*model.Test, error)
-	Exchange(ctx context.Context, bookCopyID []string) (*models.Invoice, error)
+	Exchange(ctx context.Context, bookCopyIds []string) (*models.Invoice, error)
 	PostCreate(ctx context.Context, text string, bookID string, isRecommending bool) (*models.Post, error)
 	PostUpdate(ctx context.Context, id string, text string, isRecommending bool) (*models.Post, error)
 	PostDelete(ctx context.Context, id string) (bool, error)
@@ -542,7 +542,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Exchange(childComplexity, args["bookCopyId"].([]string)), true
+		return e.complexity.Mutation.Exchange(childComplexity, args["bookCopyIds"].([]string)), true
 
 	case "Mutation.meUpdate":
 		if e.complexity.Mutation.MeUpdate == nil {
@@ -1136,14 +1136,14 @@ func (ec *executionContext) field_Mutation_exchange_args(ctx context.Context, ra
 	var err error
 	args := map[string]interface{}{}
 	var arg0 []string
-	if tmp, ok := rawArgs["bookCopyId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bookCopyId"))
+	if tmp, ok := rawArgs["bookCopyIds"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bookCopyIds"))
 		arg0, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["bookCopyId"] = arg0
+	args["bookCopyIds"] = arg0
 	return args, nil
 }
 
@@ -3464,7 +3464,7 @@ func (ec *executionContext) _Mutation_exchange(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Exchange(rctx, fc.Args["bookCopyId"].([]string))
+		return ec.resolvers.Mutation().Exchange(rctx, fc.Args["bookCopyIds"].([]string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

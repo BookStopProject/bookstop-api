@@ -73,3 +73,15 @@ func FindTradeInsByUserID(ctx context.Context, userId int) ([]*TradeIn, error) {
 
 	return tradeIns, nil
 }
+
+func DoTradeIn(ctx context.Context, userBookID int, condition BookCondition, locationID int) (*TradeIn, error) {
+	// TODO: implement procedure
+	// This procedure should:
+	// 1) Create a book copy if user book does not have one and link it to the user book
+	// 2) Update the book copy condition and location
+	// 3) Create a trade in for that book copy. The credit will be equal to
+	//		the book trade in value * condition multiplier (see book_copy.go).
+	// 4) Add the credit to the user's credit balance
+	// 5) Return the trade in
+	return nil, nil
+}

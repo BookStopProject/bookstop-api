@@ -73,3 +73,47 @@ func FindBrowseBooks(ctx context.Context, browseID int) ([]*Book, error) {
 
 	return books, nil
 }
+
+func CreateBrowse(ctx context.Context, browse *Browse) (*Browse, error) {
+	err := db.Conn.QueryRow(ctx, "INSERT INTO public.browse (name, description) VALUES ($1, $2) RETURNING id",
+		browse.Name, browse.Description).Scan(&browse.ID)
+	if err != nil {
+		return nil, err
+	}
+	return browse, nil
+}
+
+func UpdateBrowse(ctx context.Context, browse *Browse) (*Browse, error) {
+	_, err := db.Conn.Exec(ctx, "UPDATE public.browse SET name = $1, description = $2 WHERE id = $3",
+		browse.Name, browse.Description, browse.ID)
+	if err != nil {
+		return nil, err
+	}
+	return browse, nil
+}
+
+func DeleteBrowse(ctx context.Context, browseID int) error {
+	_, err := db.Conn.Exec(ctx, "DELETE FROM public.browse WHERE id = $1", browseID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func AddBookToBrowse(ctx context.Context, browseID int, bookID int) error {
+	_, err := db.Conn.Exec(ctx, "INSERT INTO public.browse_book (browse_id, book_id) VALUES ($1, $2)",
+		browseID, bookID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemoveBookFromBrowse(ctx context.Context, browseID int, bookID int) error {
+	_, err := db.Conn.Exec(ctx, "DELETE FROM public.browse_book WHERE browse_id = $1 AND book_id = $2",
+		browseID, bookID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

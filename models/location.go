@@ -65,3 +65,34 @@ func FindAllLocations(ctx context.Context) ([]*Location, error) {
 	}
 	return locations, nil
 }
+
+func CreateLocation(ctx context.Context, location *Location) (*Location, error) {
+	err := db.Conn.QueryRow(ctx, `INSERT INTO public.location (
+		name,
+		address
+	) VALUES (
+		$1,
+		$2
+	) RETURNING id`, location.Name, location.Address).Scan(&location.ID)
+	if err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
+func UpdateLocation(ctx context.Context, location *Location) (*Location, error) {
+	_, err := db.Conn.Exec(ctx, `UPDATE public.location SET
+		name = $1,
+		address = $2
+	WHERE
+		id = $3`, location.Name, location.Address, location.ID)
+	if err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
+func DeleteLocation(ctx context.Context, id int) error {
+	_, err := db.Conn.Exec(ctx, `DELETE FROM public.location WHERE id = $1`, id)
+	return err
+}

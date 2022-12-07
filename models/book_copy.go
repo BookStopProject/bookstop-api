@@ -15,10 +15,10 @@ const (
 )
 
 const (
-	BookConditionNewScale        = 1.0
-	BookConditionLikeNewScale    = 0.9
-	BookConditionGoodScale       = 0.7
-	BookConditionAcceptableScale = 0.5
+	BookConditionNewMultiplier        = 1.0
+	BookConditionLikeNewMultiplier    = 0.9
+	BookConditionGoodMultiplier       = 0.7
+	BookConditionAcceptableMultiplier = 0.5
 )
 
 type BookCopy struct {

@@ -8,13 +8,26 @@ import (
 	"bookstop/auth"
 	"bookstop/models"
 	"context"
-	"fmt"
 	"strconv"
 )
 
 // Exchange is the resolver for the exchange field.
-func (r *mutationResolver) Exchange(ctx context.Context, bookCopyID []string) (*models.Invoice, error) {
-	panic(fmt.Errorf("not implemented: Exchange - exchange"))
+func (r *mutationResolver) Exchange(ctx context.Context, bookCopyIds []string) (*models.Invoice, error) {
+	usr, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil {
+		return nil, auth.ErrUnauthorized
+	}
+
+	var bookCopyIdsNum []int
+	for _, id := range bookCopyIds {
+		idNum, _ := strconv.Atoi(id)
+		bookCopyIdsNum = append(bookCopyIdsNum, idNum)
+	}
+
+	return models.DoExchange(ctx, usr.ID, bookCopyIdsNum)
 }
 
 // BookCopiesAvailable is the resolver for the bookCopiesAvailable field.

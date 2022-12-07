@@ -313,9 +313,5 @@ func DeletePost(ctx context.Context, postID int) error {
 	// delete post
 	_, err := db.Conn.Exec(ctx, `DELETE FROM public.post WHERE id = $1`, postID)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

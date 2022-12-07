@@ -131,19 +131,35 @@ func FindEventBooks(ctx context.Context, eventId int) ([]*Book, error) {
 	var books []*Book
 	for rows.Next() {
 		var book Book
-    book.Author = &Author{}
-    err := rows.Scan(
-      &book.ID,
-      &book.Title,
-      &book.Subtitle,
-      &book.ImageURL,
-      &book.Author.ID,
-      &book.Author.Name,
-    )
+		book.Author = &Author{}
+		err := rows.Scan(
+			&book.ID,
+			&book.Title,
+			&book.Subtitle,
+			&book.ImageURL,
+			&book.Author.ID,
+			&book.Author.Name,
+		)
 		if err != nil {
 			return nil, err
 		}
 		books = append(books, &book)
 	}
 	return books, nil
+}
+
+func CreateEvent(ctx context.Context, event *Event, bookCopyIDs []int) (*Event, error) {
+	// TODO: implement procedure
+	// This procedure should:
+	// 1) accept name, description, start_time, end_time, location_id, list of book copy id
+	// 2) create an event and add the book copies to the event.
+	// 3) Verify that book copy must have location id same as event location id.
+	// Then return the event.
+
+	return nil, nil
+}
+
+func DeleteEvent(ctx context.Context, id int) error {
+	_, err := db.Conn.Exec(ctx, `DELETE FROM public.event WHERE id = $1`, id)
+	return err
 }

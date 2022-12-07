@@ -97,7 +97,7 @@ CREATE TABLE public."event_book_copy" (
     id serial PRIMARY KEY,
     event_id integer,
     book_copy_id integer,
-    FOREIGN KEY (event_id) REFERENCES public."event" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (event_id) REFERENCES public."event" (id) ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
