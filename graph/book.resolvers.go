@@ -52,4 +52,3 @@ func (r *queryResolver) Browses(ctx context.Context) ([]*models.Browse, error) {
 func (r *Resolver) Browse() BrowseResolver { return &browseResolver{r} }
 
 type browseResolver struct{ *Resolver }
-

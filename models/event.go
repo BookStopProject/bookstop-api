@@ -104,3 +104,46 @@ func FindAllEvents(ctx context.Context) ([]*Event, error) {
 	}
 	return events, nil
 }
+
+func FindEventBooks(ctx context.Context, eventId int) ([]*Book, error) {
+	rows, err := db.Conn.Query(ctx, `SELECT
+    b.id,
+    b.title,
+    b.subtitle,
+    b.image_url,
+    a.id,
+    a.name
+  FROM
+    public.event_book_copy ebc
+  JOIN
+    public.book_copy bc on ebc.book_copy_id = bc.id
+  JOIN
+    public.book b ON ebc.book_id = b.id
+  JOIN
+    public.author a ON b.author_id = a.id
+  WHERE
+    ebc.event_id = $1
+  `, eventId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var books []*Book
+	for rows.Next() {
+		var book Book
+    book.Author = &Author{}
+    err := rows.Scan(
+      &book.ID,
+      &book.Title,
+      &book.Subtitle,
+      &book.ImageURL,
+      &book.Author.ID,
+      &book.Author.Name,
+    )
+		if err != nil {
+			return nil, err
+		}
+		books = append(books, &book)
+	}
+	return books, nil
+}

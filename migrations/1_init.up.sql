@@ -80,16 +80,6 @@ CREATE TABLE public."user_book" (
     FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
-CREATE TABLE public."exchange" (
-    id serial PRIMARY KEY,
-    book_copy_id integer,
-    previous_user_id integer,
-    next_user_id integer,
-    exchange_time timestamp without time zone NULL,
-    FOREIGN KEY (previous_user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
-    FOREIGN KEY (next_user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
-);
-
 CREATE TABLE public."event" (
     id serial PRIMARY KEY,
     name varchar(128) NOT NULL,

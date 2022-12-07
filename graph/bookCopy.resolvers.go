@@ -15,6 +15,11 @@ func (r *bookCopyResolver) Condition(ctx context.Context, obj *models.BookCopy) 
 	panic(fmt.Errorf("not implemented: Condition - condition"))
 }
 
+// Owners is the resolver for the owners field.
+func (r *bookCopyResolver) Owners(ctx context.Context, obj *models.BookCopy) ([]*models.User, error) {
+	panic(fmt.Errorf("not implemented: Owners - owners"))
+}
+
 // BookCopy returns BookCopyResolver implementation.
 func (r *Resolver) BookCopy() BookCopyResolver { return &bookCopyResolver{r} }
 

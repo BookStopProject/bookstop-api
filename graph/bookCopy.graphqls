@@ -10,4 +10,5 @@ type BookCopy {
   book: Book!
   location: Location
   condition: String!
+  owners: [User!]!
 }
