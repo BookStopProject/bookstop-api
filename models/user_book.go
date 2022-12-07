@@ -10,9 +10,10 @@ import (
 )
 
 type UserBook struct {
-	ID     int `json:"id"`
-	UserID int `json:"user_id"`
-	BookID int `json:"book_id"`
+	ID         int  `json:"id"`
+	UserID     int  `json:"user_id"`
+	BookID     int  `json:"book_id"`
+	BookCopyID *int `json:"book_copy_id"`
 	// Date user starts reading the book
 	StartDate *time.Time `json:"startDate"`
 	// Date user finishes reading the book
@@ -38,6 +39,7 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 		user_book.book_id,
 		user_book.start_date,
 		user_book.end_date,
+		user_book.book_copy_id,
 		book.id,
 		book.title,
 		book.subtitle,
@@ -66,6 +68,7 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 		&userBook.BookID,
 		&userBook.StartDate,
 		&userBook.EndDate,
+		&userBook.BookCopyID,
 		&userBook.Book.ID,
 		&userBook.Book.Title,
 		&userBook.Book.Subtitle,
@@ -95,6 +98,7 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 		user_book.book_id,
 		user_book.start_date,
 		user_book.end_date,
+		user_book.book_copy_id,
 		book.id,
 		book.title,
 		book.subtitle,
@@ -136,6 +140,7 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 			&userBook.BookID,
 			&userBook.StartDate,
 			&userBook.EndDate,
+			&userBook.BookCopyID,
 			&userBook.Book.ID,
 			&userBook.Book.Title,
 			&userBook.Book.Subtitle,

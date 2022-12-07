@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
+	UserBook() UserBookResolver
 }
 
 type DirectiveRoot struct {
@@ -174,13 +175,15 @@ type ComplexityRoot struct {
 	}
 
 	UserBook struct {
-		Book      func(childComplexity int) int
-		BookID    func(childComplexity int) int
-		EndDate   func(childComplexity int) int
-		ID        func(childComplexity int) int
-		StartDate func(childComplexity int) int
-		User      func(childComplexity int) int
-		UserID    func(childComplexity int) int
+		Book       func(childComplexity int) int
+		BookCopyID func(childComplexity int) int
+		BookID     func(childComplexity int) int
+		EndDate    func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Owners     func(childComplexity int) int
+		StartDate  func(childComplexity int) int
+		User       func(childComplexity int) int
+		UserID     func(childComplexity int) int
 	}
 }
 
@@ -225,6 +228,9 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	Credit(ctx context.Context, obj *models.User) (*int, error)
+}
+type UserBookResolver interface {
+	Owners(ctx context.Context, obj *models.UserBook) ([]*models.User, error)
 }
 
 type executableSchema struct {
@@ -916,6 +922,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserBook.Book(childComplexity), true
 
+	case "UserBook.bookCopyId":
+		if e.complexity.UserBook.BookCopyID == nil {
+			break
+		}
+
+		return e.complexity.UserBook.BookCopyID(childComplexity), true
+
 	case "UserBook.bookId":
 		if e.complexity.UserBook.BookID == nil {
 			break
@@ -936,6 +949,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserBook.ID(childComplexity), true
+
+	case "UserBook.owners":
+		if e.complexity.UserBook.Owners == nil {
+			break
+		}
+
+		return e.complexity.UserBook.Owners(childComplexity), true
 
 	case "UserBook.startDate":
 		if e.complexity.UserBook.StartDate == nil {
@@ -3743,6 +3763,10 @@ func (ec *executionContext) fieldContext_Mutation_userBookAdd(ctx context.Contex
 				return ec.fieldContext_UserBook_bookId(ctx, field)
 			case "book":
 				return ec.fieldContext_UserBook_book(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_UserBook_bookCopyId(ctx, field)
+			case "owners":
+				return ec.fieldContext_UserBook_owners(ctx, field)
 			case "startDate":
 				return ec.fieldContext_UserBook_startDate(ctx, field)
 			case "endDate":
@@ -3814,6 +3838,10 @@ func (ec *executionContext) fieldContext_Mutation_userBookEdit(ctx context.Conte
 				return ec.fieldContext_UserBook_bookId(ctx, field)
 			case "book":
 				return ec.fieldContext_UserBook_book(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_UserBook_bookCopyId(ctx, field)
+			case "owners":
+				return ec.fieldContext_UserBook_owners(ctx, field)
 			case "startDate":
 				return ec.fieldContext_UserBook_startDate(ctx, field)
 			case "endDate":
@@ -5266,6 +5294,10 @@ func (ec *executionContext) fieldContext_Query_userBook(ctx context.Context, fie
 				return ec.fieldContext_UserBook_bookId(ctx, field)
 			case "book":
 				return ec.fieldContext_UserBook_book(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_UserBook_bookCopyId(ctx, field)
+			case "owners":
+				return ec.fieldContext_UserBook_owners(ctx, field)
 			case "startDate":
 				return ec.fieldContext_UserBook_startDate(ctx, field)
 			case "endDate":
@@ -5337,6 +5369,10 @@ func (ec *executionContext) fieldContext_Query_userBooks(ctx context.Context, fi
 				return ec.fieldContext_UserBook_bookId(ctx, field)
 			case "book":
 				return ec.fieldContext_UserBook_book(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_UserBook_bookCopyId(ctx, field)
+			case "owners":
+				return ec.fieldContext_UserBook_owners(ctx, field)
 			case "startDate":
 				return ec.fieldContext_UserBook_startDate(ctx, field)
 			case "endDate":
@@ -6078,6 +6114,105 @@ func (ec *executionContext) fieldContext_UserBook_book(ctx context.Context, fiel
 				return ec.fieldContext_Book_genre(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserBook_bookCopyId(ctx context.Context, field graphql.CollectedField, obj *models.UserBook) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserBook_bookCopyId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BookCopyID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserBook_bookCopyId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserBook",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserBook_owners(ctx context.Context, field graphql.CollectedField, obj *models.UserBook) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserBook_owners(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.UserBook().Owners(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖbookstopᚋmodelsᚐUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserBook_owners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserBook",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "name":
+				return ec.fieldContext_User_name(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "profilePicture":
+				return ec.fieldContext_User_profilePicture(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_User_creationTime(ctx, field)
+			case "credit":
+				return ec.fieldContext_User_credit(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -9163,36 +9298,60 @@ func (ec *executionContext) _UserBook(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._UserBook_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "userId":
 
 			out.Values[i] = ec._UserBook_userId(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "user":
 
 			out.Values[i] = ec._UserBook_user(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "bookId":
 
 			out.Values[i] = ec._UserBook_bookId(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "book":
 
 			out.Values[i] = ec._UserBook_book(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "bookCopyId":
+
+			out.Values[i] = ec._UserBook_bookCopyId(ctx, field, obj)
+
+		case "owners":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserBook_owners(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "startDate":
 
 			out.Values[i] = ec._UserBook_startDate(ctx, field, obj)

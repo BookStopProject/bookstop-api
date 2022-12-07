@@ -4,6 +4,8 @@ type UserBook {
   user: User!
   bookId: Int!
   book: Book!
+  bookCopyId: Int
+  owners: [User!]! @goField(forceResolver: true)
   startDate: Time
   endDate: Time
 }

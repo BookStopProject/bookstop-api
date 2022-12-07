@@ -134,10 +134,15 @@ func (r *queryResolver) UserBooks(ctx context.Context, userID *string) ([]*model
 	return models.FindUserBooksByUserID(ctx, idNum)
 }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+// Owners is the resolver for the owners field.
+func (r *userBookResolver) Owners(ctx context.Context, obj *models.UserBook) ([]*models.User, error) {
+	if obj.BookCopyID == nil {
+		return make([]*models.User, 0), nil
+	}
+	return models.FindBookCopyOwners(ctx, *obj.BookCopyID)
+}
+
+// UserBook returns UserBookResolver implementation.
+func (r *Resolver) UserBook() UserBookResolver { return &userBookResolver{r} }
+
 type userBookResolver struct{ *Resolver }

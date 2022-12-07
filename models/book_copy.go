@@ -1,5 +1,10 @@
 package models
 
+import (
+	"bookstop/db"
+	"context"
+)
+
 type BookCondition string
 
 const (
@@ -23,4 +28,30 @@ type BookCopy struct {
 	Book       *Book         `json:"book"`
 	LocationID *int          `json:"locationId"`
 	Location   *Location     `json:"location"`
+}
+
+func FindBookCopyOwners(ctx context.Context, bookCopyID int) ([]*User, error) {
+	var users []*User
+	rows, err := db.Conn.Query(ctx, `SELECT
+		"user".id,
+		"user".name,
+		"user".profile_picture
+	FROM
+		public.user_book
+		JOIN public."user" ON user_book.book_copy_id = "user".id
+	WHERE
+		user_book.book_copy_id = $1`, bookCopyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.ID, &user.Name, &user.ProfilePicture)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, nil
 }

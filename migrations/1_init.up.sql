@@ -74,10 +74,12 @@ CREATE TABLE public."user_book" (
     id serial PRIMARY KEY,
     book_id integer NOT NULL,
     user_id integer NOT NULL,
+    book_copy_id integer NULL,
     start_date date,
     end_date date,
     FOREIGN KEY (book_id) REFERENCES public."book" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
-    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
 CREATE TABLE public."event" (
