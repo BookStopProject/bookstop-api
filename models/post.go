@@ -287,8 +287,8 @@ func FindPostsByBookID(ctx context.Context, bookID int, limit int, before *int) 
 
 func CreatePost(ctx context.Context, post *Post) (*Post, error) {
 	// insert post and return the created post
-	err := db.Conn.QueryRow(ctx, `INSERT INTO public.post (text, creation_time, book_id, user_id, is_recommending)
-	VALUES ($1, $2, $3, $4, $5) RETURNING id`, post.Text, post.CreationTime, post.BookID, post.UserID, post.IsRecommending).Scan(&post.ID)
+	err := db.Conn.QueryRow(ctx, `INSERT INTO public.post (text, book_id, user_id, is_recommending)
+	VALUES ($1, $2, $3, $4) RETURNING id, creation_time`, post.Text, post.BookID, post.UserID, post.IsRecommending).Scan(&post.ID, &post.CreationTime)
 
 	if err != nil {
 		return nil, err
@@ -299,8 +299,8 @@ func CreatePost(ctx context.Context, post *Post) (*Post, error) {
 
 func UpdatePost(ctx context.Context, post *Post) (*Post, error) {
 	// update post and return the updated post
-	_, err := db.Conn.Exec(ctx, `UPDATE public.post SET text = $1, creation_time = $2, book_id = $3, user_id = $4, is_recommending = $5
-	WHERE id = $6`, post.Text, post.CreationTime, post.BookID, post.UserID, post.IsRecommending, post.ID)
+	_, err := db.Conn.Exec(ctx, `UPDATE public.post SET text = $1, is_recommending = $2
+	WHERE id = $3`, post.Text, post.IsRecommending, post.ID)
 
 	if err != nil {
 		return nil, err

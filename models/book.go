@@ -11,9 +11,9 @@ import (
 type Book struct {
 	ID             int     `json:"id"`
 	Title          string  `json:"title"`
-	Subtitle       string  `json:"subtitle"`
-	ImageURL       string  `json:"imageUrl"`
-	Description    string  `json:"description"`
+	Subtitle       *string `json:"subtitle"`
+	ImageURL       *string `json:"imageUrl"`
+	Description    *string `json:"description"`
 	PublishedYear  int     `json:"publishedYear"`
 	AuthorID       int     `json:"authorId"`
 	GenreID        int     `json:"genreId"`
@@ -32,17 +32,18 @@ func FindBookByID(ctx context.Context, id int) (*Book, error) {
 	b.title,
 	b.subtitle,
 	b.description,
+	b.image_url,
 	b.published_year,
 	b.tradein_credit,
 	b.exchange_credit,
 	a.id AS author_id,
 	a.name AS author_name,
 	g.id AS genre_id,
-	g.name AS genre_name,
+	g.name AS genre_name
 FROM
-	public."book" b
-	JOIN public."author" a ON b.author_id = a.id
-	JOIN public."genre" g ON b.genre_id = g.id
+	public.book b
+	JOIN public.author a ON b.author_id = a.id
+	JOIN public.genre g ON b.genre_id = g.id
 WHERE
 	b.id = $1
 `, id).Scan(
@@ -50,6 +51,7 @@ WHERE
 		&book.Title,
 		&book.Subtitle,
 		&book.Description,
+		&book.ImageURL,
 		&book.PublishedYear,
 		&book.TradeinCredit,
 		&book.ExchangeCredit,

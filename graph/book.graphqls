@@ -15,7 +15,7 @@ type Book {
   subtitle: String
   imageUrl: String
   description: String
-  publishedYear: Int
+  publishedYear: Int!
   author: Author
   genre: Genre
 }

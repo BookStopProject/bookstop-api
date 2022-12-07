@@ -15,11 +15,11 @@ type UserBook struct {
 	BookID     int  `json:"book_id"`
 	BookCopyID *int `json:"book_copy_id"`
 	// Date user starts reading the book
-	StartDate *time.Time `json:"startDate"`
+	StartDate *string `json:"startDate"`
 	// Date user finishes reading the book
-	EndDate *time.Time `json:"endDate"`
-	Book    *Book      `json:"book"`
-	User    *User      `json:"user"`
+	EndDate *string `json:"endDate"`
+	Book    *Book   `json:"book"`
+	User    *User   `json:"user"`
 }
 
 func (ub *UserBook) IsOwner(userID int) bool {
@@ -33,6 +33,8 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 	userBook.Book.Author = &Author{}
 	userBook.Book.Genre = &Genre{}
 	userBook.User = &User{}
+	var startDate *time.Time
+	var endDate *time.Time
 	err := db.Conn.QueryRow(ctx, `SELECT
 		user_book.id,
 		user_book.user_id,	
@@ -44,6 +46,7 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 		book.title,
 		book.subtitle,
 		book.description,
+		book.image_url,
 		book.published_year,
 		book.author_id,
 		book.genre_id,
@@ -59,24 +62,27 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 		JOIN public.book ON user_book.book_id = book.id
 		JOIN public.author ON book.author_id = author.id
 		JOIN public.genre ON book.genre_id = genre.id
-		JOIN public.user ON user_book.user_id = user.id
+		JOIN public.user ON user_book.user_id = "user".id
 	WHERE
 		user_book.id = $1
 	`, id).Scan(
 		&userBook.ID,
 		&userBook.UserID,
 		&userBook.BookID,
-		&userBook.StartDate,
-		&userBook.EndDate,
+		&startDate,
+		&endDate,
 		&userBook.BookCopyID,
 		&userBook.Book.ID,
 		&userBook.Book.Title,
 		&userBook.Book.Subtitle,
 		&userBook.Book.Description,
+		&userBook.Book.ImageURL,
 		&userBook.Book.PublishedYear,
+		&userBook.Book.AuthorID,
+		&userBook.Book.GenreID,
 		&userBook.Book.Author.ID,
-		&userBook.Book.Genre.ID,
 		&userBook.Book.Author.Name,
+		&userBook.Book.Genre.ID,
 		&userBook.Book.Genre.Name,
 		&userBook.User.ID,
 		&userBook.User.Name,
@@ -86,6 +92,14 @@ func FindUserBookByID(ctx context.Context, id int) (*UserBook, error) {
 			return nil, nil
 		}
 		return nil, err
+	}
+	if startDate != nil {
+		startDateStr := startDate.Format("2006-01-02")
+		userBook.StartDate = &startDateStr
+	}
+	if endDate != nil {
+		endDateStr := endDate.Format("2006-01-02")
+		userBook.EndDate = &endDateStr
 	}
 	return &userBook, nil
 }
@@ -102,8 +116,8 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 		book.id,
 		book.title,
 		book.subtitle,
-		book.description,
 		book.published_year,
+		book.image_url,
 		book.author_id,
 		book.genre_id,
 		author.id,
@@ -134,27 +148,39 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 		userBook.Book.Author = &Author{}
 		userBook.Book.Genre = &Genre{}
 		userBook.User = &User{}
+		var startDate *time.Time
+		var endDate *time.Time
 		err = rows.Scan(
 			&userBook.ID,
 			&userBook.UserID,
 			&userBook.BookID,
-			&userBook.StartDate,
-			&userBook.EndDate,
+			&startDate,
+			&endDate,
 			&userBook.BookCopyID,
 			&userBook.Book.ID,
 			&userBook.Book.Title,
 			&userBook.Book.Subtitle,
-			&userBook.Book.Description,
 			&userBook.Book.PublishedYear,
+			&userBook.Book.ImageURL,
+			&userBook.Book.AuthorID,
+			&userBook.Book.GenreID,
 			&userBook.Book.Author.ID,
-			&userBook.Book.Genre.ID,
 			&userBook.Book.Author.Name,
+			&userBook.Book.Genre.ID,
 			&userBook.Book.Genre.Name,
 			&userBook.User.ID,
 			&userBook.User.Name,
 			&userBook.User.ProfilePicture)
 		if err != nil {
 			return nil, err
+		}
+		if startDate != nil {
+			startDateStr := startDate.Format("2006-01-02")
+			userBook.StartDate = &startDateStr
+		}
+		if endDate != nil {
+			endDateStr := endDate.Format("2006-01-02")
+			userBook.EndDate = &endDateStr
 		}
 		userBooks = append(userBooks, &userBook)
 	}

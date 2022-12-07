@@ -24,25 +24,11 @@ func (r *mutationResolver) UserBookAdd(ctx context.Context, bookID string, start
 	}
 
 	bookIDNum, _ := strconv.Atoi(bookID)
-	var startDateObj *time.Time
-	var endDateObj *time.Time
-	if startDate != nil {
-		startDateObj = &time.Time{}
-		if err = startDateObj.UnmarshalText([]byte(*startDate)); err != nil {
-			return nil, err
-		}
-	}
-	if endDate != nil {
-		endDateObj = &time.Time{}
-		if err = endDateObj.UnmarshalText([]byte(*endDate)); err != nil {
-			return nil, err
-		}
-	}
 	userBook := models.UserBook{
 		BookID:    bookIDNum,
 		UserID:    usr.ID,
-		StartDate: startDateObj,
-		EndDate:   endDateObj,
+		StartDate: startDate,
+		EndDate:   endDate,
 	}
 
 	return models.CreateUserBook(ctx, &userBook)
@@ -68,25 +54,8 @@ func (r *mutationResolver) UserBookEdit(ctx context.Context, id string, startDat
 	if userBook.IsOwner(usr.ID) == false {
 		return nil, auth.ErrUnauthorized
 	}
-
-	if startDate != nil {
-		startDateObj := &time.Time{}
-		if err = startDateObj.UnmarshalText([]byte(*startDate)); err != nil {
-			return nil, err
-		}
-		userBook.StartDate = startDateObj
-	} else {
-		userBook.StartDate = nil
-	}
-	if endDate != nil {
-		endDateObj := &time.Time{}
-		if err = endDateObj.UnmarshalText([]byte(*endDate)); err != nil {
-			return nil, err
-		}
-		userBook.EndDate = endDateObj
-	} else {
-		userBook.EndDate = nil
-	}
+	userBook.StartDate = startDate
+	userBook.EndDate = endDate
 
 	return models.UpdateUserBook(ctx, userBook)
 }
@@ -146,3 +115,16 @@ func (r *userBookResolver) Owners(ctx context.Context, obj *models.UserBook) ([]
 func (r *Resolver) UserBook() UserBookResolver { return &userBookResolver{r} }
 
 type userBookResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *userBookResolver) StartDate(ctx context.Context, obj *models.UserBook) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: StartDate - startDate"))
+}
+func (r *userBookResolver) EndDate(ctx context.Context, obj *models.UserBook) (*time.Time, error) {
+	panic(fmt.Errorf("not implemented: EndDate - endDate"))
+}

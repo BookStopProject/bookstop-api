@@ -6,8 +6,8 @@ type UserBook {
   book: Book!
   bookCopyId: Int
   owners: [User!]! @goField(forceResolver: true)
-  startDate: Time
-  endDate: Time
+  startDate: String
+  endDate: String
 }
 
 extend type Query {

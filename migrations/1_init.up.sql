@@ -9,7 +9,7 @@ CREATE TABLE public."author" (
 CREATE TABLE public."genre" (
     id serial PRIMARY KEY,
     name varchar(64) NOT NULL,
-    description text NOT NULL
+    description text NULL
 );
 
 CREATE TABLE public."book" (
