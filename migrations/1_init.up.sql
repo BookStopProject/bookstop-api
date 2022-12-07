@@ -1,7 +1,7 @@
 CREATE TABLE public."author" (
     id serial PRIMARY KEY,
     name varchar(100) NOT NULL,
-    description varchar(160),
+    description text,
     date_of_birth date NULL,
     date_of_death date NULL
 );
@@ -37,6 +37,7 @@ CREATE TYPE book_condition AS ENUM (
 CREATE TABLE public."user" (
     id serial PRIMARY KEY,
     oauth_id varchar(50) NOT NULL,
+    email varchar(100) NOT NULL,
     name varchar(100) NOT NULL,
     bio varchar(160),
     profile_picture varchar,
@@ -115,6 +116,16 @@ CREATE TABLE public."invoice_entry" (
     book_copy_id integer,
     PRIMARY KEY (invoice_id, book_copy_id),
     FOREIGN KEY (invoice_id) REFERENCES public."invoice" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
+    FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+);
+
+CREATE TABLE public."trade_in" (
+    id serial PRIMARY KEY,
+    user_id integer,
+    book_copy_id integer,
+    credit integer,
+    creation_time timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
+    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
     FOREIGN KEY (book_copy_id) REFERENCES public."book_copy" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 

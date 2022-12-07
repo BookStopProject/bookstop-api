@@ -12,9 +12,17 @@ import (
 )
 
 func GetConf() *oauth2.Config {
+	clientId := os.Getenv("GOOGLE_CLIENT_ID")
+	if clientId == "" {
+		panic("GOOGLE_CLIENT_ID is not set")
+	}
+	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	if clientSecret == "" {
+		panic("GOOGLE_CLIENT_SECRET is not set")
+	}
 	return &oauth2.Config{
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		RedirectURL:  os.Getenv("API_URL") + "/auth/callback",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",

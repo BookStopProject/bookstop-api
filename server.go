@@ -4,28 +4,28 @@ import (
 	"bookstop/auth"
 	"bookstop/db"
 	"bookstop/graph"
-	"context"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 )
 
-const defaultPort = "8080"
 const gqlEndpoint = "/graphql"
 
 func main() {
+	godotenv.Load(".env")
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = defaultPort
+		panic("PORT is not set")
 	}
 
-	defer db.Conn.Close(context.Background())
+	defer db.Conn.Close()
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 

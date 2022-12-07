@@ -2,29 +2,29 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func initDB() *pgx.Conn {
+func initDB() *pgxpool.Pool {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatalln("No DATABASE_URL env")
 	}
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-
+	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
-		log.Printf("Unable to connect to database: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		os.Exit(1)
 	}
 
-	log.Printf("Connected to database: %s", conn.Config().Database)
+	log.Printf("Connected to database: %s", dbpool.Config().ConnConfig.Database)
 
-	return conn
+	return dbpool
 }
 
 var Conn = initDB()

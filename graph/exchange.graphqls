@@ -12,9 +12,19 @@ type Invoice {
   location: Location!
 }
 
+type TradeIn {
+  id: ID!
+  userId: ID!
+  bookCopyId: ID!
+  credit: Int!
+  creationTime: Time!
+  book: Book!
+}
+
 extend type Query {
   bookCopiesAvailable(bookId: ID!): [BookCopy!]!
   meInvoices: [Invoice!]!
+  meTradeIns: [TradeIn!]!
 }
 
 extend type Mutation {

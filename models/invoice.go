@@ -63,6 +63,52 @@ func FindInvoiceByID(ctx context.Context, id int) (*Invoice, error) {
 	return &invoice, nil
 }
 
+func FindInvoicesByUserID(ctx context.Context, userID int) ([]*Invoice, error) {
+	var invoices []*Invoice
+
+	// Find invoices and join with locations
+	rows, err := db.Conn.Query(ctx, `
+		SELECT
+			i.id,
+			i.creation_time,
+			i.user_id,
+			i.location_id,
+			l.id,
+			l.name,
+			l.address,
+		FROM invoice i
+		JOIN location l ON i.location_id = l.id
+		WHERE i.user_id = $1
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var invoice Invoice
+		invoice.User = &User{}
+		invoice.Location = &Location{}
+
+		err := rows.Scan(
+			&invoice.ID,
+			&invoice.CreationTime,
+			&invoice.UserID,
+			&invoice.LocationID,
+			&invoice.Location.ID,
+			&invoice.Location.Name,
+			&invoice.Location.Address,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		invoices = append(invoices, &invoice)
+	}
+
+	return invoices, nil
+}
+
 func FindInvoiceEntriesByInvoiceID(ctx context.Context, id int) ([]*InvoiceEntry, error) {
 	var invoiceEntries []*InvoiceEntry
 

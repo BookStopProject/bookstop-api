@@ -152,6 +152,7 @@ type ComplexityRoot struct {
 		Locations           func(childComplexity int) int
 		Me                  func(childComplexity int) int
 		MeInvoices          func(childComplexity int) int
+		MeTradeIns          func(childComplexity int) int
 		Post                func(childComplexity int, id string) int
 		Posts               func(childComplexity int, userID *string, bookID *string, limit int, before *int) int
 		Test                func(childComplexity int) int
@@ -163,6 +164,15 @@ type ComplexityRoot struct {
 	Test struct {
 		ID     func(childComplexity int) int
 		Status func(childComplexity int) int
+	}
+
+	TradeIn struct {
+		Book         func(childComplexity int) int
+		BookCopyID   func(childComplexity int) int
+		CreationTime func(childComplexity int) int
+		Credit       func(childComplexity int) int
+		ID           func(childComplexity int) int
+		UserID       func(childComplexity int) int
 	}
 
 	User struct {
@@ -217,6 +227,7 @@ type QueryResolver interface {
 	Event(ctx context.Context, id string) (*models.Event, error)
 	BookCopiesAvailable(ctx context.Context, bookID string) ([]*models.BookCopy, error)
 	MeInvoices(ctx context.Context) ([]*models.Invoice, error)
+	MeTradeIns(ctx context.Context) ([]*models.TradeIn, error)
 	Location(ctx context.Context, id string) (*models.Location, error)
 	Locations(ctx context.Context) ([]*models.Location, error)
 	Posts(ctx context.Context, userID *string, bookID *string, limit int, before *int) ([]*models.Post, error)
@@ -792,6 +803,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.MeInvoices(childComplexity), true
 
+	case "Query.meTradeIns":
+		if e.complexity.Query.MeTradeIns == nil {
+			break
+		}
+
+		return e.complexity.Query.MeTradeIns(childComplexity), true
+
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
 			break
@@ -872,6 +890,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Test.Status(childComplexity), true
+
+	case "TradeIn.book":
+		if e.complexity.TradeIn.Book == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.Book(childComplexity), true
+
+	case "TradeIn.bookCopyId":
+		if e.complexity.TradeIn.BookCopyID == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.BookCopyID(childComplexity), true
+
+	case "TradeIn.creationTime":
+		if e.complexity.TradeIn.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.CreationTime(childComplexity), true
+
+	case "TradeIn.credit":
+		if e.complexity.TradeIn.Credit == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.Credit(childComplexity), true
+
+	case "TradeIn.id":
+		if e.complexity.TradeIn.ID == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.ID(childComplexity), true
+
+	case "TradeIn.userId":
+		if e.complexity.TradeIn.UserID == nil {
+			break
+		}
+
+		return e.complexity.TradeIn.UserID(childComplexity), true
 
 	case "User.bio":
 		if e.complexity.User.Bio == nil {
@@ -4877,6 +4937,64 @@ func (ec *executionContext) fieldContext_Query_meInvoices(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_meTradeIns(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_meTradeIns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MeTradeIns(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TradeIn)
+	fc.Result = res
+	return ec.marshalNTradeIn2ᚕᚖbookstopᚋmodelsᚐTradeInᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_meTradeIns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TradeIn_id(ctx, field)
+			case "userId":
+				return ec.fieldContext_TradeIn_userId(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_TradeIn_bookCopyId(ctx, field)
+			case "credit":
+				return ec.fieldContext_TradeIn_credit(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_TradeIn_creationTime(ctx, field)
+			case "book":
+				return ec.fieldContext_TradeIn_book(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TradeIn", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_location(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_location(ctx, field)
 	if err != nil {
@@ -5612,6 +5730,288 @@ func (ec *executionContext) fieldContext_Test_status(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _TradeIn_id(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeIn_userId(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_userId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeIn_bookCopyId(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_bookCopyId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BookCopyID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_bookCopyId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeIn_credit(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_credit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Credit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_credit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeIn_creationTime(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TradeIn_book(ctx context.Context, field graphql.CollectedField, obj *models.TradeIn) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TradeIn_book(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Book, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Book)
+	fc.Result = res
+	return ec.marshalNBook2ᚖbookstopᚋmodelsᚐBook(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TradeIn_book(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TradeIn",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Book_title(ctx, field)
+			case "subtitle":
+				return ec.fieldContext_Book_subtitle(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_Book_imageUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Book_description(ctx, field)
+			case "publishedYear":
+				return ec.fieldContext_Book_publishedYear(ctx, field)
+			case "author":
+				return ec.fieldContext_Book_author(ctx, field)
+			case "genre":
+				return ec.fieldContext_Book_genre(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *models.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
@@ -6142,9 +6542,9 @@ func (ec *executionContext) _UserBook_bookCopyId(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalOInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserBook_bookCopyId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8986,6 +9386,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "meTradeIns":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_meTradeIns(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "location":
 			field := field
 
@@ -9201,6 +9624,69 @@ func (ec *executionContext) _Test(ctx context.Context, sel ast.SelectionSet, obj
 		case "status":
 
 			out.Values[i] = ec._Test_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var tradeInImplementors = []string{"TradeIn"}
+
+func (ec *executionContext) _TradeIn(ctx context.Context, sel ast.SelectionSet, obj *models.TradeIn) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tradeInImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TradeIn")
+		case "id":
+
+			out.Values[i] = ec._TradeIn_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userId":
+
+			out.Values[i] = ec._TradeIn_userId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "bookCopyId":
+
+			out.Values[i] = ec._TradeIn_bookCopyId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "credit":
+
+			out.Values[i] = ec._TradeIn_credit(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "creationTime":
+
+			out.Values[i] = ec._TradeIn_creationTime(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "book":
+
+			out.Values[i] = ec._TradeIn_book(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -10263,6 +10749,60 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTradeIn2ᚕᚖbookstopᚋmodelsᚐTradeInᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.TradeIn) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTradeIn2ᚖbookstopᚋmodelsᚐTradeIn(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTradeIn2ᚖbookstopᚋmodelsᚐTradeIn(ctx context.Context, sel ast.SelectionSet, v *models.TradeIn) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TradeIn(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2bookstopᚋmodelsᚐUser(ctx context.Context, sel ast.SelectionSet, v models.User) graphql.Marshaler {

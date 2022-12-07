@@ -118,7 +118,7 @@ func FindUserBooksByUserID(ctx context.Context, userID int) ([]*UserBook, error)
 		JOIN public.book ON user_book.book_id = book.id
 		JOIN public.author ON book.author_id = author.id
 		JOIN public.genre ON book.genre_id = genre.id
-		JOIN public.user ON user_book.user_id = user.id
+		JOIN public.user ON user_book.user_id = "user".id
 	WHERE
 		user_book.user_id = $1
 	`, userID)

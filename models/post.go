@@ -49,7 +49,7 @@ func FindPostByID(ctx context.Context, id int) (*Post, error) {
 		public.post
 		JOIN public.book ON post.book_id = book.id
 		JOIN public.author ON book.author_id = author.id
-		JOIN public.user ON post.user_id = user.id
+		JOIN public.user ON post.user_id = "user".id
 	WHERE
 		post.id = $1
 	`, id).Scan(
@@ -114,6 +114,8 @@ func FindAllPosts(ctx context.Context, limit int, before *int) ([]*Post, error) 
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	var posts []*Post
 	for rows.Next() {
 		post := &Post{}
@@ -170,7 +172,7 @@ func FindPostsByUserID(ctx context.Context, userID int, limit int, before *int) 
 		public.post
 		JOIN public.book ON post.book_id = book.id
 		JOIN public.author ON book.author_id = author.id
-		JOIN public.user ON post.user_id = user.id
+		JOIN public.user ON post.user_id = "user".id
 	WHERE
 		post.user_id = $1
 		AND post.id < $3
@@ -180,6 +182,8 @@ func FindPostsByUserID(ctx context.Context, userID int, limit int, before *int) 
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	var posts []*Post
 	for rows.Next() {
@@ -230,14 +234,14 @@ func FindPostsByBookID(ctx context.Context, bookID int, limit int, before *int) 
 		book.author_id,
 		author.id,
 		author.name,
-		user.id,
-		user.name,
-		user.profile_picture
+		"user".id,
+		"user".name,
+		"user".profile_picture
 	FROM
 		public.post
 		JOIN public.book ON post.book_id = book.id
 		JOIN public.author ON book.author_id = author.id
-		JOIN public.user ON post.user_id = user.id
+		JOIN public.user ON post.user_id = "user".id
 	WHERE
 		post.book_id = $1
 		AND post.id < $3
@@ -247,6 +251,8 @@ func FindPostsByBookID(ctx context.Context, bookID int, limit int, before *int) 
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	var posts []*Post
 	for rows.Next() {
