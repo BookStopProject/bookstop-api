@@ -175,6 +175,7 @@ BEGIN
     ELSIF book_copy.condition = 'acceptable' THEN
       curr_credit = 0.5 * book.exchange_credit;
     END IF;
+    invoice_total_credit + = curr_credit;
     -- For each book copy, create an invoice entry.
     INSERT INTO public."invoice_entry" (invoice_id, book_copy_id, credit)
       VALUES (invoice_id, book_copy_id, curr_credit);
@@ -185,6 +186,9 @@ BEGIN
       location_id = NULL
     WHERE
       id = book_copy_id;
+    -- For each book copy, create a user book with the book copy id and user id.
+    INSERT INTO public."user_book" (user_id, book_id, book_copy_id)
+      VALUES (user_id, book_copy.book_id, book_copy_id);
   END LOOP;
   -- Get the current credit of user
   SELECT
