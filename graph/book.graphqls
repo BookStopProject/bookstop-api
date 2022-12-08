@@ -18,6 +18,8 @@ type Book {
   publishedYear: Int!
   author: Author
   genre: Genre
+  tradeinCredit: Int
+  exchangeCredit: Int
 }
 
 type Browse {

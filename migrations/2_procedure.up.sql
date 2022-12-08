@@ -132,15 +132,16 @@ LANGUAGE 'plpgsql';
 -- // 6) Calculate the total credit of the invoice. Deduct the total credit from the user's balance
 -- //		(must verify that user has enough balance)
 -- // 7) Return the invoice.
-CREATE OR REPLACE PROCEDURE do_exchange (IN user_id integer, IN book_copy_ids integer[], OUT invoice_id integer)
+CREATE OR REPLACE PROCEDURE do_exchange (IN user_id integer, IN book_copy_ids integer[])
   AS $$
 DECLARE
   invoice_total_credit integer;
-  credit integer;
+  curr_credit integer;
   book_copy_id integer;
   book_copy RECORD;
   book RECORD;
   usr RECORD;
+  invoice_id integer;
 BEGIN
   invoice_total_credit = 0;
   -- Create an invoice
@@ -166,17 +167,17 @@ BEGIN
       RAISE EXCEPTION 'Book copy % is not available at a location', book_copy_id;
     END IF;
     IF book_copy.condition = 'new' THEN
-      credit = 1.0 * book.exchange_credit;
+      curr_credit = 1.0 * book.exchange_credit;
     ELSIF book_copy.condition = 'like_new' THEN
-      credit = 0.9 * book.exchange_credit;
+      curr_credit = 0.9 * book.exchange_credit;
     ELSIF book_copy.condition = 'good' THEN
-      credit = 0.8 * book.exchange_credit;
+      curr_credit = 0.8 * book.exchange_credit;
     ELSIF book_copy.condition = 'acceptable' THEN
-      credit = 0.5 * book.exchange_credit;
+      curr_credit = 0.5 * book.exchange_credit;
     END IF;
     -- For each book copy, create an invoice entry.
     INSERT INTO public."invoice_entry" (invoice_id, book_copy_id, credit)
-      VALUES (invoice_id, book_copy_id, credit);
+      VALUES (invoice_id, book_copy_id, curr_credit);
     -- For each book copy, update the book copy location_id to nil.
     UPDATE
       public."book_copy"
@@ -193,14 +194,14 @@ BEGIN
   WHERE
     id = user_id;
   -- Throw an exception if user credit is not enough
-  IF usr.balance < invoice_total_credit THEN
+  IF usr.credit < invoice_total_credit THEN
     RAISE EXCEPTION 'User % does not have enough credit', user_id;
   END IF;
   -- Deduct the total credit from the user's balance
   UPDATE
     public."user"
   SET
-    balance = balance - invoice_total_credit
+    credit = credit - invoice_total_credit
   WHERE
     id = user_id;
 END;

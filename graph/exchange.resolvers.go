@@ -12,13 +12,13 @@ import (
 )
 
 // Exchange is the resolver for the exchange field.
-func (r *mutationResolver) Exchange(ctx context.Context, bookCopyIds []string) (*models.Invoice, error) {
+func (r *mutationResolver) Exchange(ctx context.Context, bookCopyIds []string) (bool, error) {
 	usr, err := auth.ForContext(ctx)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	if usr == nil {
-		return nil, auth.ErrUnauthorized
+		return false, auth.ErrUnauthorized
 	}
 
 	var bookCopyIdsNum []int
@@ -27,7 +27,13 @@ func (r *mutationResolver) Exchange(ctx context.Context, bookCopyIds []string) (
 		bookCopyIdsNum = append(bookCopyIdsNum, idNum)
 	}
 
-	return models.DoExchange(ctx, usr.ID, bookCopyIdsNum)
+	_, err = models.DoExchange(ctx, usr.ID, bookCopyIdsNum)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // BookCopiesAvailable is the resolver for the bookCopiesAvailable field.

@@ -57,14 +57,16 @@ type ComplexityRoot struct {
 	}
 
 	Book struct {
-		Author        func(childComplexity int) int
-		Description   func(childComplexity int) int
-		Genre         func(childComplexity int) int
-		ID            func(childComplexity int) int
-		ImageURL      func(childComplexity int) int
-		PublishedYear func(childComplexity int) int
-		Subtitle      func(childComplexity int) int
-		Title         func(childComplexity int) int
+		Author         func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ExchangeCredit func(childComplexity int) int
+		Genre          func(childComplexity int) int
+		ID             func(childComplexity int) int
+		ImageURL       func(childComplexity int) int
+		PublishedYear  func(childComplexity int) int
+		Subtitle       func(childComplexity int) int
+		Title          func(childComplexity int) int
+		TradeinCredit  func(childComplexity int) int
 	}
 
 	BookCopy struct {
@@ -204,7 +206,7 @@ type BrowseResolver interface {
 }
 type MutationResolver interface {
 	Test(ctx context.Context) (*model.Test, error)
-	Exchange(ctx context.Context, bookCopyIds []string) (*models.Invoice, error)
+	Exchange(ctx context.Context, bookCopyIds []string) (bool, error)
 	PostCreate(ctx context.Context, text string, bookID string, isRecommending bool) (*models.Post, error)
 	PostUpdate(ctx context.Context, id string, text string, isRecommending bool) (*models.Post, error)
 	PostDelete(ctx context.Context, id string) (bool, error)
@@ -285,6 +287,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Book.Description(childComplexity), true
 
+	case "Book.exchangeCredit":
+		if e.complexity.Book.ExchangeCredit == nil {
+			break
+		}
+
+		return e.complexity.Book.ExchangeCredit(childComplexity), true
+
 	case "Book.genre":
 		if e.complexity.Book.Genre == nil {
 			break
@@ -326,6 +335,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Book.Title(childComplexity), true
+
+	case "Book.tradeinCredit":
+		if e.complexity.Book.TradeinCredit == nil {
+			break
+		}
+
+		return e.complexity.Book.TradeinCredit(childComplexity), true
 
 	case "BookCopy.book":
 		if e.complexity.BookCopy.Book == nil {
@@ -2034,6 +2050,88 @@ func (ec *executionContext) fieldContext_Book_genre(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Book_tradeinCredit(ctx context.Context, field graphql.CollectedField, obj *models.Book) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Book_tradeinCredit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TradeinCredit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Book_tradeinCredit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Book",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Book_exchangeCredit(ctx context.Context, field graphql.CollectedField, obj *models.Book) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Book_exchangeCredit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExchangeCredit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Book_exchangeCredit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Book",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BookCopy_id(ctx context.Context, field graphql.CollectedField, obj *models.BookCopy) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BookCopy_id(ctx, field)
 	if err != nil {
@@ -2133,6 +2231,10 @@ func (ec *executionContext) fieldContext_BookCopy_book(ctx context.Context, fiel
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -2475,6 +2577,10 @@ func (ec *executionContext) fieldContext_Browse_books(ctx context.Context, field
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -3364,9 +3470,9 @@ func (ec *executionContext) _Mutation_exchange(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.Invoice)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNInvoice2ᚖbookstopᚋmodelsᚐInvoice(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_exchange(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3376,13 +3482,7 @@ func (ec *executionContext) fieldContext_Mutation_exchange(ctx context.Context, 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Invoice_id(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_Invoice_creationTime(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {
@@ -4097,6 +4197,10 @@ func (ec *executionContext) fieldContext_Post_book(ctx context.Context, field gr
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -4264,6 +4368,10 @@ func (ec *executionContext) fieldContext_Query_book(ctx context.Context, field g
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -4337,6 +4445,10 @@ func (ec *executionContext) fieldContext_Query_bookSearch(ctx context.Context, f
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -5888,6 +6000,10 @@ func (ec *executionContext) fieldContext_TradeIn_book(ctx context.Context, field
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -6392,6 +6508,10 @@ func (ec *executionContext) fieldContext_UserBook_book(ctx context.Context, fiel
 				return ec.fieldContext_Book_author(ctx, field)
 			case "genre":
 				return ec.fieldContext_Book_genre(ctx, field)
+			case "tradeinCredit":
+				return ec.fieldContext_Book_tradeinCredit(ctx, field)
+			case "exchangeCredit":
+				return ec.fieldContext_Book_exchangeCredit(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
@@ -8447,6 +8567,14 @@ func (ec *executionContext) _Book(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._Book_genre(ctx, field, obj)
 
+		case "tradeinCredit":
+
+			out.Values[i] = ec._Book_tradeinCredit(ctx, field, obj)
+
+		case "exchangeCredit":
+
+			out.Values[i] = ec._Book_exchangeCredit(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10403,10 +10531,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNInvoice2bookstopᚋmodelsᚐInvoice(ctx context.Context, sel ast.SelectionSet, v models.Invoice) graphql.Marshaler {
-	return ec._Invoice(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNInvoice2ᚕᚖbookstopᚋmodelsᚐInvoiceᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Invoice) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -11107,6 +11231,16 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 	res := graphql.MarshalID(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	return res
 }
 

@@ -12,7 +12,7 @@ import (
 
 // Condition is the resolver for the condition field.
 func (r *bookCopyResolver) Condition(ctx context.Context, obj *models.BookCopy) (string, error) {
-	panic(fmt.Errorf("not implemented: Condition - condition"))
+	return string(obj.Condition), nil
 }
 
 // Owners is the resolver for the owners field.
