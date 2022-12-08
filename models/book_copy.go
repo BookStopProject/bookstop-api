@@ -38,7 +38,7 @@ func FindBookCopyOwners(ctx context.Context, bookCopyID int) ([]*User, error) {
 		"user".profile_picture
 	FROM
 		public.user_book
-		JOIN public."user" ON user_book.book_copy_id = "user".id
+		JOIN public."user" ON user_book.user_id = "user".id
 	WHERE
 		user_book.book_copy_id = $1`, bookCopyID)
 	if err != nil {
