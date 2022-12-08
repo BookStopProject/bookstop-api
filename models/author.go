@@ -1,11 +1,3 @@
-// CREATE TABLE public."author" (
-// 	id serial PRIMARY KEY,
-// 	name varchar(100) NOT NULL,
-// 	description varchar(160),
-// 	date_of_birth date varying(200) NOT NULL,
-// 	date_of_death date varying(200) NOT NULL,
-// );
-
 package models
 
 import (

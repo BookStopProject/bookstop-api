@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bookstop/admin"
 	"bookstop/auth"
 	"bookstop/db"
 	"bookstop/graph"
@@ -36,17 +37,18 @@ func main() {
 		AllowOriginFunc: func(_ string) bool {
 			return true
 		},
-		AllowedMethods: []string{"GET", "POST"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"*"},
 	})
 
-	apiGraphQL := cor.Handler(auth.Middleware(srv))
+	apiGraphQL := auth.Middleware(srv)
 	router.Handler(http.MethodGet, gqlEndpoint, apiGraphQL)
 	router.Handler(http.MethodPost, gqlEndpoint, apiGraphQL)
 	router.Handler(http.MethodOptions, gqlEndpoint, apiGraphQL)
 
 	auth.Router(router)
+	admin.Router(router)
 
 	log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Fatal(http.ListenAndServe(":"+port, cor.Handler(router)))
 }

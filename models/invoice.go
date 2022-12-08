@@ -14,8 +14,6 @@ type Invoice struct {
 	CreationTime time.Time `json:"creationTime"`
 	UserID       int       `json:"userId"`
 	User         *User     `json:"user"`
-	LocationID   int       `json:"locationId"`
-	Location     *Location `json:"location"`
 }
 
 type InvoiceEntry struct {
@@ -29,28 +27,18 @@ func FindInvoiceByID(ctx context.Context, id int) (*Invoice, error) {
 	var invoice Invoice
 
 	invoice.User = &User{}
-	invoice.Location = &Location{}
 
 	err := db.Conn.QueryRow(ctx, `
 		SELECT
 			i.id,
 			i.creation_time,
-			i.user_id,
-			i.location_id,
-			l.id,
-			l.name,
-			l.address,
+			i.user_id
 		FROM invoice i
-		JOIN location l ON i.location_id = l.id
 		WHERE i.id = $1
 	`, id).Scan(
 		&invoice.ID,
 		&invoice.CreationTime,
 		&invoice.UserID,
-		&invoice.LocationID,
-		&invoice.Location.ID,
-		&invoice.Location.Name,
-		&invoice.Location.Address,
 	)
 
 	if err != nil {
@@ -71,13 +59,8 @@ func FindInvoicesByUserID(ctx context.Context, userID int) ([]*Invoice, error) {
 		SELECT
 			i.id,
 			i.creation_time,
-			i.user_id,
-			i.location_id,
-			l.id,
-			l.name,
-			l.address,
+			i.user_id
 		FROM invoice i
-		JOIN location l ON i.location_id = l.id
 		WHERE i.user_id = $1
 	`, userID)
 	if err != nil {
@@ -88,16 +71,11 @@ func FindInvoicesByUserID(ctx context.Context, userID int) ([]*Invoice, error) {
 	for rows.Next() {
 		var invoice Invoice
 		invoice.User = &User{}
-		invoice.Location = &Location{}
 
 		err := rows.Scan(
 			&invoice.ID,
 			&invoice.CreationTime,
 			&invoice.UserID,
-			&invoice.LocationID,
-			&invoice.Location.ID,
-			&invoice.Location.Name,
-			&invoice.Location.Address,
 		)
 		if err != nil {
 			return nil, err

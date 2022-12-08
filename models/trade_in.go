@@ -4,6 +4,8 @@ import (
 	"bookstop/db"
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type TradeIn struct {
@@ -26,7 +28,8 @@ func FindTradeInsByUserID(ctx context.Context, userId int) ([]*TradeIn, error) {
 		ti.creation_time,
 		b.id,
 		b.title,
-		b.subtitle
+		b.subtitle,
+		b.image_url,
 		b.published_year,
 		a.id,
 		a.name
@@ -59,6 +62,7 @@ func FindTradeInsByUserID(ctx context.Context, userId int) ([]*TradeIn, error) {
 			&tradeIn.Book.ID,
 			&tradeIn.Book.Title,
 			&tradeIn.Book.Subtitle,
+			&tradeIn.Book.ImageURL,
 			&tradeIn.Book.PublishedYear,
 			&tradeIn.Book.Author.ID,
 			&tradeIn.Book.Author.Name,
@@ -74,14 +78,46 @@ func FindTradeInsByUserID(ctx context.Context, userId int) ([]*TradeIn, error) {
 	return tradeIns, nil
 }
 
-func DoTradeIn(ctx context.Context, userBookID int, condition BookCondition, locationID int) (*TradeIn, error) {
-	// TODO: implement procedure
-	// This procedure should:
-	// 1) Create a book copy if user book does not have one and link it to the user book
-	// 2) Update the book copy condition and location
-	// 3) Create a trade in for that book copy. The credit will be equal to
-	//		the book trade in value * condition multiplier (see book_copy.go).
-	// 4) Add the credit to the user's credit balance
-	// 5) Return the trade in
+func DoTradeIn(ctx context.Context, conn *pgx.Conn, userBookID int, condition BookCondition, locationID int) (*TradeIn, error) {
+	var tradeIn TradeIn
+	tradeIn.Book = &Book{}
+	tradeIn.Book.Author = &Author{}
+
+	_, err := conn.Exec(ctx, `CALL do_trade_in($1, $2, $3)`,
+		userBookID, condition, locationID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Find trade in
 	return nil, nil
+}
+
+type TradeinPreview struct {
+	UserBook *UserBook `json:"userBook"`
+	Credit   int       `json:"credit"`
+}
+
+func CalculateTradeInPreview(ctx context.Context, conn *pgx.Conn, userBookID int, condition BookCondition) (*TradeinPreview, error) {
+	var tradeInPreview TradeinPreview
+	tradeInPreview.UserBook = &UserBook{}
+	tradeInPreview.UserBook.Book = &Book{}
+	err := conn.QueryRow(ctx, `SELECT
+		book_id,
+		book_title,
+		book_subtitle,
+		book_credit
+	FROM get_user_book_and_credit($1, $2)`,
+		userBookID, condition).Scan(
+		&tradeInPreview.UserBook.Book.ID,
+		&tradeInPreview.UserBook.Book.Title,
+		&tradeInPreview.UserBook.Book.Subtitle,
+		&tradeInPreview.Credit,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	return &tradeInPreview, nil
 }

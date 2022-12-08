@@ -119,3 +119,37 @@ func CreateUser(ctx context.Context, name string, oauthID string, email string, 
 	}
 	return &user, nil
 }
+
+func FindAllUsers(ctx context.Context, conn *pgx.Conn) ([]*User, error) {
+	rows, err := conn.Query(ctx, `SELECT
+		id,
+		oauth_id,
+		name,
+		bio,
+		profile_picture,
+		creation_time,
+		credit
+	FROM
+		public.user`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]*User, 0)
+	for rows.Next() {
+		var user User
+		err := rows.Scan(
+			&user.ID,
+			&user.OauthID,
+			&user.Name,
+			&user.Bio,
+			&user.ProfilePicture,
+			&user.CreationTime,
+			&user.Credit)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, nil
+}

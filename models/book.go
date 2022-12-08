@@ -90,7 +90,7 @@ func SearchBooks(ctx context.Context, query string, limit int, skip int) ([]*Boo
 	WHERE
 		b.title ILIKE $1
 		OR b.subtitle ILIKE $1
-		OR b.description ILIKE $1
+		OR a.name ILIKE $1
 	LIMIT $2 OFFSET $3
 `, "%"+query+"%", limit, skip)
 	if err != nil {

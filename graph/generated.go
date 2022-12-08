@@ -100,8 +100,6 @@ type ComplexityRoot struct {
 	Invoice struct {
 		CreationTime func(childComplexity int) int
 		ID           func(childComplexity int) int
-		Location     func(childComplexity int) int
-		LocationID   func(childComplexity int) int
 	}
 
 	InvoiceEntry struct {
@@ -468,20 +466,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Invoice.ID(childComplexity), true
-
-	case "Invoice.location":
-		if e.complexity.Invoice.Location == nil {
-			break
-		}
-
-		return e.complexity.Invoice.Location(childComplexity), true
-
-	case "Invoice.locationId":
-		if e.complexity.Invoice.LocationID == nil {
-			break
-		}
-
-		return e.complexity.Invoice.LocationID(childComplexity), true
 
 	case "InvoiceEntry.bookCopy":
 		if e.complexity.InvoiceEntry.BookCopy == nil {
@@ -2984,102 +2968,6 @@ func (ec *executionContext) fieldContext_Invoice_creationTime(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Invoice_locationId(ctx context.Context, field graphql.CollectedField, obj *models.Invoice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Invoice_locationId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.LocationID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Invoice_locationId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invoice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invoice_location(ctx context.Context, field graphql.CollectedField, obj *models.Invoice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Invoice_location(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Location, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.Location)
-	fc.Result = res
-	return ec.marshalNLocation2ᚖbookstopᚋmodelsᚐLocation(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Invoice_location(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invoice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Location_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Location_name(ctx, field)
-			case "address":
-				return ec.fieldContext_Location_address(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Location", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _InvoiceEntry_invoiceId(ctx context.Context, field graphql.CollectedField, obj *models.InvoiceEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_InvoiceEntry_invoiceId(ctx, field)
 	if err != nil {
@@ -3493,10 +3381,6 @@ func (ec *executionContext) fieldContext_Mutation_exchange(ctx context.Context, 
 				return ec.fieldContext_Invoice_id(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Invoice_creationTime(ctx, field)
-			case "locationId":
-				return ec.fieldContext_Invoice_locationId(ctx, field)
-			case "location":
-				return ec.fieldContext_Invoice_location(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
 		},
@@ -4929,10 +4813,6 @@ func (ec *executionContext) fieldContext_Query_meInvoices(ctx context.Context, f
 				return ec.fieldContext_Invoice_id(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Invoice_creationTime(ctx, field)
-			case "locationId":
-				return ec.fieldContext_Invoice_locationId(ctx, field)
-			case "location":
-				return ec.fieldContext_Invoice_location(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
 		},
@@ -8835,20 +8715,6 @@ func (ec *executionContext) _Invoice(ctx context.Context, sel ast.SelectionSet, 
 		case "creationTime":
 
 			out.Values[i] = ec._Invoice_creationTime(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "locationId":
-
-			out.Values[i] = ec._Invoice_locationId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "location":
-
-			out.Values[i] = ec._Invoice_location(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

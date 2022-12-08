@@ -45,12 +45,14 @@ func FindAllLocations(ctx context.Context) ([]*Location, error) {
 		address
 	FROM
 		public.location
+	ORDER BY
+		id ASC
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var locations []*Location
+	locations := make([]*Location, 0)
 	for rows.Next() {
 		var location Location
 		err := rows.Scan(

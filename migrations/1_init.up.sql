@@ -104,7 +104,6 @@ CREATE TABLE public."event_book_copy" (
 CREATE TABLE public."invoice" (
     id serial PRIMARY KEY,
     user_id integer,
-    location_id integer,
     creation_time timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
     FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
     FOREIGN KEY (location_id) REFERENCES public."location" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
@@ -143,3 +142,5 @@ CREATE TABLE public."browse_book" (
     FOREIGN KEY (book_id) REFERENCES public."book" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
+-- // Calculate the profit grouped by book id
+-- // The profit is the difference between invoice entry credit and book trade in credit
