@@ -96,16 +96,19 @@ func FindInvoiceEntriesByInvoiceID(ctx context.Context, id int) ([]*InvoiceEntry
 		SELECT
 			ie.invoice_id,
 			ie.credit,
-			ie.book_copy_id
+			ie.book_copy_id,
 			bc.id,
 			bc.book_id,
 			b.id,
 			b.title,
 			b.subtitle,
 			b.image_url,
+			a.id,
+			a.name
 		FROM invoice_entry ie
 		JOIN book_copy bc ON ie.book_copy_id = bc.id
 		JOIN book b ON bc.book_id = b.id
+		JOIN author a ON b.author_id = a.id
 		WHERE ie.invoice_id = $1
 	`, id)
 	if err != nil {
@@ -117,6 +120,7 @@ func FindInvoiceEntriesByInvoiceID(ctx context.Context, id int) ([]*InvoiceEntry
 		var invoiceEntry InvoiceEntry
 		invoiceEntry.BookCopy = &BookCopy{}
 		invoiceEntry.BookCopy.Book = &Book{}
+		invoiceEntry.BookCopy.Book.Author = &Author{}
 
 		err := rows.Scan(
 			&invoiceEntry.InvoiceID,
@@ -128,6 +132,8 @@ func FindInvoiceEntriesByInvoiceID(ctx context.Context, id int) ([]*InvoiceEntry
 			&invoiceEntry.BookCopy.Book.Title,
 			&invoiceEntry.BookCopy.Book.Subtitle,
 			&invoiceEntry.BookCopy.Book.ImageURL,
+			&invoiceEntry.BookCopy.Book.Author.ID,
+			&invoiceEntry.BookCopy.Book.Author.Name,
 		)
 		if err != nil {
 			return nil, err

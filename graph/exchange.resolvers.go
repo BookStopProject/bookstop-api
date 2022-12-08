@@ -11,6 +11,11 @@ import (
 	"strconv"
 )
 
+// Entries is the resolver for the entries field.
+func (r *invoiceResolver) Entries(ctx context.Context, obj *models.Invoice) ([]*models.InvoiceEntry, error) {
+	return models.FindInvoiceEntriesByInvoiceID(ctx, obj.ID)
+}
+
 // Exchange is the resolver for the exchange field.
 func (r *mutationResolver) Exchange(ctx context.Context, bookCopyIds []string) (bool, error) {
 	usr, err := auth.ForContext(ctx)
@@ -67,3 +72,8 @@ func (r *queryResolver) MeTradeIns(ctx context.Context) ([]*models.TradeIn, erro
 
 	return models.FindTradeInsByUserID(ctx, usr.ID)
 }
+
+// Invoice returns InvoiceResolver implementation.
+func (r *Resolver) Invoice() InvoiceResolver { return &invoiceResolver{r} }
+
+type invoiceResolver struct{ *Resolver }

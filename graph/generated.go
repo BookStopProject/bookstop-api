@@ -41,6 +41,7 @@ type Config struct {
 type ResolverRoot interface {
 	BookCopy() BookCopyResolver
 	Browse() BrowseResolver
+	Invoice() InvoiceResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
@@ -101,6 +102,7 @@ type ComplexityRoot struct {
 
 	Invoice struct {
 		CreationTime func(childComplexity int) int
+		Entries      func(childComplexity int) int
 		ID           func(childComplexity int) int
 	}
 
@@ -203,6 +205,9 @@ type BookCopyResolver interface {
 }
 type BrowseResolver interface {
 	Books(ctx context.Context, obj *models.Browse) ([]*models.Book, error)
+}
+type InvoiceResolver interface {
+	Entries(ctx context.Context, obj *models.Invoice) ([]*models.InvoiceEntry, error)
 }
 type MutationResolver interface {
 	Test(ctx context.Context) (*model.Test, error)
@@ -476,6 +481,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Invoice.CreationTime(childComplexity), true
 
+	case "Invoice.entries":
+		if e.complexity.Invoice.Entries == nil {
+			break
+		}
+
+		return e.complexity.Invoice.Entries(childComplexity), true
+
 	case "Invoice.id":
 		if e.complexity.Invoice.ID == nil {
 			break
@@ -497,7 +509,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InvoiceEntry.BookCopyID(childComplexity), true
 
-	case "InvoiceEntry.Credit":
+	case "InvoiceEntry.credit":
 		if e.complexity.InvoiceEntry.Credit == nil {
 			break
 		}
@@ -3074,6 +3086,60 @@ func (ec *executionContext) fieldContext_Invoice_creationTime(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Invoice_entries(ctx context.Context, field graphql.CollectedField, obj *models.Invoice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Invoice_entries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Invoice().Entries(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*models.InvoiceEntry)
+	fc.Result = res
+	return ec.marshalNInvoiceEntry2ᚕᚖbookstopᚋmodelsᚐInvoiceEntryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Invoice_entries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invoice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "invoiceId":
+				return ec.fieldContext_InvoiceEntry_invoiceId(ctx, field)
+			case "credit":
+				return ec.fieldContext_InvoiceEntry_credit(ctx, field)
+			case "bookCopyId":
+				return ec.fieldContext_InvoiceEntry_bookCopyId(ctx, field)
+			case "bookCopy":
+				return ec.fieldContext_InvoiceEntry_bookCopy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvoiceEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _InvoiceEntry_invoiceId(ctx context.Context, field graphql.CollectedField, obj *models.InvoiceEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_InvoiceEntry_invoiceId(ctx, field)
 	if err != nil {
@@ -3118,8 +3184,8 @@ func (ec *executionContext) fieldContext_InvoiceEntry_invoiceId(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _InvoiceEntry_Credit(ctx context.Context, field graphql.CollectedField, obj *models.InvoiceEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_InvoiceEntry_Credit(ctx, field)
+func (ec *executionContext) _InvoiceEntry_credit(ctx context.Context, field graphql.CollectedField, obj *models.InvoiceEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvoiceEntry_credit(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3149,7 +3215,7 @@ func (ec *executionContext) _InvoiceEntry_Credit(ctx context.Context, field grap
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_InvoiceEntry_Credit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_InvoiceEntry_credit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "InvoiceEntry",
 		Field:      field,
@@ -4925,6 +4991,8 @@ func (ec *executionContext) fieldContext_Query_meInvoices(ctx context.Context, f
 				return ec.fieldContext_Invoice_id(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Invoice_creationTime(ctx, field)
+			case "entries":
+				return ec.fieldContext_Invoice_entries(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invoice", field.Name)
 		},
@@ -8838,15 +8906,35 @@ func (ec *executionContext) _Invoice(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Invoice_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "creationTime":
 
 			out.Values[i] = ec._Invoice_creationTime(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "entries":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Invoice_entries(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8875,9 +8963,9 @@ func (ec *executionContext) _InvoiceEntry(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Credit":
+		case "credit":
 
-			out.Values[i] = ec._InvoiceEntry_Credit(ctx, field, obj)
+			out.Values[i] = ec._InvoiceEntry_credit(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -10583,6 +10671,60 @@ func (ec *executionContext) marshalNInvoice2ᚖbookstopᚋmodelsᚐInvoice(ctx c
 		return graphql.Null
 	}
 	return ec._Invoice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNInvoiceEntry2ᚕᚖbookstopᚋmodelsᚐInvoiceEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.InvoiceEntry) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNInvoiceEntry2ᚖbookstopᚋmodelsᚐInvoiceEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNInvoiceEntry2ᚖbookstopᚋmodelsᚐInvoiceEntry(ctx context.Context, sel ast.SelectionSet, v *models.InvoiceEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InvoiceEntry(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNLocation2ᚕᚖbookstopᚋmodelsᚐLocationᚄ(ctx context.Context, sel ast.SelectionSet, v []*models.Location) graphql.Marshaler {

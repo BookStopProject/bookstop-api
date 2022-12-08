@@ -1,6 +1,6 @@
 type InvoiceEntry {
   invoiceId: ID!
-  Credit: Int!
+  credit: Int!
   bookCopyId: ID!
   bookCopy: BookCopy!
 }
@@ -8,6 +8,7 @@ type InvoiceEntry {
 type Invoice {
   id: ID!
   creationTime: Time!
+  entries: [InvoiceEntry!]! @goField(forceResolver: true)
 }
 
 type TradeIn {
