@@ -105,8 +105,7 @@ CREATE TABLE public."invoice" (
     id serial PRIMARY KEY,
     user_id integer,
     creation_time timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
-    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT,
-    FOREIGN KEY (location_id) REFERENCES public."location" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
+    FOREIGN KEY (user_id) REFERENCES public."user" (id) ON UPDATE NO ACTION ON DELETE RESTRICT
 );
 
 CREATE TABLE public."invoice_entry" (
