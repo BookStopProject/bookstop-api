@@ -10,6 +10,8 @@ Website: https://bookstop.app
 | [bookstop-api](https://github.com/BookStopProject/bookstop-api)     | Golang API Server (GraphQL) and Admin Page |
 | [bookstop-home](https://github.com/BookStopProject/bookstop-home)   |              Preact homepage               |
 
+In December 2022, this codebase has been adapted to use DB procedures and functions for use in my Database System class.
+
 ## .env
 
 ```env
