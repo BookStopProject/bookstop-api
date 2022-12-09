@@ -10,7 +10,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-      - "--certificatesresolvers.myresolver.acme.email=developer@example.com"
+      - "--certificatesresolvers.myresolver.acme.email=joe@example.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       - "443:443"
@@ -51,6 +51,8 @@ services:
       retries: 5
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - 5432:5432
   redis:
     image: redis:6.2.6-alpine
     restart: always

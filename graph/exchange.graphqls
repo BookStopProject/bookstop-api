@@ -1,12 +1,31 @@
-type Exchange {
+type InvoiceEntry {
+  invoiceId: ID!
+  credit: Int!
+  bookCopyId: ID!
+  bookCopy: BookCopy!
+}
+
+type Invoice {
   id: ID!
-  userBookIdOld: ID!
-  userBookOld: UserBook! @goField(forceResolver: true)
-  userBookIdNew: ID!
-  userBookNew: UserBook! @goField(forceResolver: true)
-  exchangedAt: Time!
+  creationTime: Time!
+  entries: [InvoiceEntry!]! @goField(forceResolver: true)
+}
+
+type TradeIn {
+  id: ID!
+  userId: ID!
+  bookCopyId: ID!
+  credit: Int!
+  creationTime: Time!
+  book: Book!
 }
 
 extend type Query {
-  exchanges(userBookId: ID!): [Exchange!]!
+  bookCopiesAvailable(bookId: ID!): [BookCopy!]!
+  meInvoices: [Invoice!]!
+  meTradeIns: [TradeIn!]!
+}
+
+extend type Mutation {
+  exchange(bookCopyIds: [ID!]!): Boolean!
 }

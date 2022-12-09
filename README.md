@@ -15,7 +15,6 @@ Website: https://bookstop.app
 ```env
 DATABASE_URL=postgresql://postgres@postgres/postgres
 REDIS_URL=redis://redis:6379/0
-GOOGLE_API_KEY=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 API_URL=https://api.bookstop.app
@@ -53,7 +52,6 @@ docker compose -f docker-compose.dev.yml up
 Run server:
 
 ```bash
-export $(grep -v '^#' .env | xargs)
 go run server.go
 ```
 

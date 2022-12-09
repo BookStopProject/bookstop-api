@@ -1,17 +1,17 @@
 type User {
   id: ID!
   name: String!
-  description: String
-  profileImageUrl: String
-  createdAt: Time!
-  credit: Int
+  bio: String
+  profilePicture: String
+  creationTime: Time
+  credit: Int @goField(forceResolver: true)
 }
 
 extend type Query {
   me: User
-  user(id: ID!): User
+  user(id: ID!): User!
 }
 
 extend type Mutation {
-  meUpdate(name: String, description: String): User
+  meUpdate(name: String!, bio: String): User!
 }

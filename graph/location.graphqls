@@ -1,10 +1,10 @@
 type Location {
   id: ID!
   name: String!
-  parentName: String
-  addressLine: String!
+  address: String!
 }
 
 extend type Query {
+  location(id: ID!): Location
   locations: [Location!]!
 }

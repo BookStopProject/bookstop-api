@@ -1,0 +1,19 @@
+type Post {
+  id: ID!
+  text: String!
+  isRecommending: Boolean!
+  creationTime: Time!
+  book: Book!
+  user: User!
+}
+
+extend type Query {
+  posts(userId: ID, bookId: ID, limit: Int!, before: Int): [Post!]!
+  post(id: ID!): Post
+}
+
+extend type Mutation {
+  postCreate(text: String!, bookId: ID!, isRecommending: Boolean!): Post!
+  postUpdate(id: ID!, text: String!, isRecommending: Boolean!): Post!
+  postDelete(id: ID!): Boolean!
+}

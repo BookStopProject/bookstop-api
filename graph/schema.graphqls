@@ -1,9 +1,18 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Test {
+  id: ID!
+  status: String!
+}
+
 type Query {
-  foo: Int
+  test: Test!
 }
 
 type Mutation {
-  foo: Int
+  test: Test!
 }
 
 scalar Time
