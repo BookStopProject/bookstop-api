@@ -1,7 +1,7 @@
 -- A procedure that accepts a user book id and condition
 -- and returns user book information and a credit value for the book based on the condition
-CREATE OR REPLACE FUNCTION get_user_book_and_credit (user_book_id integer, condition text)
-  RETURNS TABLE (
+CREATE OR REPLACE FUNCTION get_user_book_and_credit(user_book_id integer, condition text)
+  RETURNS TABLE(
     book_id integer,
     book_title varchar,
     book_subtitle varchar,
@@ -51,7 +51,7 @@ LANGUAGE 'plpgsql';
 -- //		the book trade in value * condition multiplier (see book_copy.go).
 -- // 4) Add the credit to the user's credit balance
 -- // 5) Return the trade in id
-CREATE OR REPLACE PROCEDURE do_trade_in (IN user_book_id integer, IN curr_condition book_condition, IN curr_location_id integer)
+CREATE OR REPLACE PROCEDURE do_trade_in(IN user_book_id integer, IN curr_condition book_condition, IN curr_location_id integer)
   AS $$
 DECLARE
   curr_book_copy_id integer;
@@ -75,7 +75,7 @@ BEGIN
     id = user_book.book_id;
   -- Create a book copy if user book does not have one and link it to the user book
   IF user_book.book_copy_id IS NULL THEN
-    INSERT INTO public."book_copy" (book_id, condition, location_id)
+    INSERT INTO public."book_copy"(book_id, condition, location_id)
       VALUES (user_book.book_id, curr_condition, curr_location_id)
     RETURNING
       id INTO curr_book_copy_id;
@@ -107,7 +107,7 @@ BEGIN
     trade_in_credit = 0.5 * book.tradein_credit;
   END IF;
   -- Create a trade in for that book copy
-  INSERT INTO public."trade_in" (user_id, book_copy_id, credit)
+  INSERT INTO public."trade_in"(user_id, book_copy_id, credit)
     VALUES (user_book.user_id, curr_book_copy_id, trade_in_credit)
   RETURNING
     id INTO trade_in_id;
@@ -132,7 +132,7 @@ LANGUAGE 'plpgsql';
 -- // 6) Calculate the total credit of the invoice. Deduct the total credit from the user's balance
 -- //		(must verify that user has enough balance)
 -- // 7) Return the invoice.
-CREATE OR REPLACE PROCEDURE do_exchange (IN user_id integer, IN book_copy_ids integer[])
+CREATE OR REPLACE PROCEDURE do_exchange(IN user_id integer, IN book_copy_ids integer[])
   AS $$
 DECLARE
   invoice_total_credit integer;
@@ -145,7 +145,7 @@ DECLARE
 BEGIN
   invoice_total_credit = 0;
   -- Create an invoice
-  INSERT INTO public."invoice" (user_id)
+  INSERT INTO public."invoice"(user_id)
     VALUES (user_id)
   RETURNING
     id INTO invoice_id;
@@ -175,9 +175,9 @@ BEGIN
     ELSIF book_copy.condition = 'acceptable' THEN
       curr_credit = 0.5 * book.exchange_credit;
     END IF;
-    invoice_total_credit + = curr_credit;
+    invoice_total_credit = invoice_total_credit + curr_credit;
     -- For each book copy, create an invoice entry.
-    INSERT INTO public."invoice_entry" (invoice_id, book_copy_id, credit)
+    INSERT INTO public."invoice_entry"(invoice_id, book_copy_id, credit)
       VALUES (invoice_id, book_copy_id, curr_credit);
     -- For each book copy, update the book copy location_id to nil.
     UPDATE
@@ -187,7 +187,7 @@ BEGIN
     WHERE
       id = book_copy_id;
     -- For each book copy, create a user book with the book copy id and user id.
-    INSERT INTO public."user_book" (user_id, book_id, book_copy_id)
+    INSERT INTO public."user_book"(user_id, book_id, book_copy_id)
       VALUES (user_id, book_copy.book_id, book_copy_id);
   END LOOP;
   -- Get the current credit of user
